@@ -1,0 +1,129 @@
+zone-com: &com
+  nodeSelector:
+    zone: com
+
+zone-green: &green
+  nodeSelector:
+    zone: green
+
+zone-net: &net
+  nodeSelector:
+    zone: net
+
+#namespaces:
+#  - name: default
+#    network_policy:
+#      ingress:
+#        "isolation": "DefaultDeny"
+        
+#daemonsets:
+#  - name: trireme
+#    containers:
+#      - name: trireme
+#        image: aporeto/trireme-kubernetes
+#        env:
+#          - {name: SYNC_EXISTING_CONTAINERS, value: "true"}
+#          - {name: TRIREME_NETS, value: "250.0.0.0/8"}
+#          - {name: TRIREME_AUTH_TYPE, value: "PSK"}
+#          - {name: TRIREME_PSK, value: "secret"}
+#          - {name: POD_NAMESPACE, value: "default"}
+#          - {name: KUBERNETES_SERVICE_HOST, value: "kmaster.local"}
+#          - {name: KUBERNETES_SERVICE_PORT, value: "8080"}
+#          - {name: KUBERNETES_MASTER, value: "http://kmaster.local:8080"}
+#          - name: KUBERNETES_NODE
+#            valueFrom:
+#              fieldRef:
+#                fieldPath: spec.host
+#        securityContext:
+#          privileged: true
+#        volumeMounts:
+#          - {name: docker,  mountPath: /var/run/docker.sock}
+#    volumes:
+#      - {name: docker, hostPath: {path: /var/run/docker.sock}}
+      
+services:
+  - name: knginx-com
+    ports:
+      - {port: 80, name: http}
+      - {port: 443, name: https}
+    annotations:
+      icon: http://nginx.org/nginx.png
+    pod:
+      annotations:
+        prometheus.io/scrape: true
+        prometheus.io/port: 9102
+      terminationGracePeriodSeconds: 1
+      <<: *com
+      replicas: 1
+      containers:
+        - name: knginx
+          image: registry.rebelsoft.com/knginx:latest
+          ports:
+            - {containerPort: 80,    hostPort: 80}
+            - {containerPort: 443,    hostPort: 443}
+          readinessProbe:
+            httpGet:
+              path: /lb-status
+              port: 80
+            initialDelaySeconds: 10
+          env:
+            - {name: PAGESPEED, value: "on"}
+            - {name: ETCD_HOST, value: "{{ ETCD_HOST }}"}
+            - {name: ANNOTATION, value: "com"}
+          securityContext:
+            privileged: true
+
+  - name: knginx-net
+    ports:
+      - {port: 80, name: http}
+      - {port: 443, name: https}
+    annotations:
+      icon: http://nginx.org/nginx.png
+    pod:
+      annotations:
+        prometheus.io/scrape: true
+        prometheus.io/port: 9102
+      terminationGracePeriodSeconds: 1
+      <<: *net
+      replicas: 1
+      containers:
+        - name: knginx
+          image: registry.rebelsoft.com/knginx:latest
+          ports:
+            - {containerPort: 80,    hostPort: 80}
+            - {containerPort: 443,    hostPort: 443}
+          readinessProbe:
+            httpGet:
+              path: /lb-status
+              port: 80
+            initialDelaySeconds: 10
+          env:
+            - {name: PAGESPEED, value: "on"}
+            - {name: ETCD_HOST, value: "{{ ETCD_HOST }}"}
+            - {name: ANNOTATION, value: "net"}
+          securityContext:
+            privileged: true
+
+  - name: httpbin
+    ports:
+      - port: 5000
+    annotations:
+      net:
+        - http:
+            - server: httpbin.*
+              locations:
+                - /
+      com:
+        - http:
+            - server: default
+              locations:
+                - /html
+                - /get
+    pod:
+      <<: *green
+      replicas: 1
+      containers:
+        - name: httpbin
+          image: registry.rebelsoft.com/httpbin:latest
+          scm: https://github.com/mingfang/docker-httpbin.git
+
