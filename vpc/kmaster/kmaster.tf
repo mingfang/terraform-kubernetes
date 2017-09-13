@@ -49,7 +49,7 @@ data "aws_ami" "kubernetes" {
 }
 
 resource "aws_launch_configuration" "lc" {
-  name_prefix                 = "${var.name}-"
+  name                        = "${var.name}"
   instance_type               = "${var.instance_type}"
   image_id                    = "${data.aws_ami.kubernetes.id}"
   key_name                    = "${var.key_name}"
