@@ -30,6 +30,10 @@ variable "admin_subnets" {
   type = "list"
 }
 
+variable "db_subnets" {
+  type = "list"
+}
+
 variable "kmaster_subnets" {
   type = "list"
 }
@@ -103,6 +107,17 @@ module "admin_subnets" {
   nat_gateway_ids = "${module.nats.ids}"
 }
 
+module "db_subnets" {
+  source = "./private_subnet"
+
+  name   = "${var.name}-db"
+  cidrs  = "${var.db_subnets}"
+  vpc_id = "${var.vpc_id}"
+  azs    = "${var.azs}"
+
+  nat_gateway_ids = "${module.nats.ids}"
+}
+
 //todo: public for testing; make private
 module "kmaster_subnets" {
   //  source = "./private_subnet"
@@ -168,6 +183,14 @@ output "green_subnet_ids" {
 
 output "net_subnet_ids" {
   value = "${module.net_subnets.ids}"
+}
+
+output "admin_subnet_ids" {
+  value = "${module.admin_subnets.ids}"
+}
+
+output "db_subnet_ids" {
+  value = "${module.db_subnets.ids}"
 }
 
 output "com_subnet_ids" {

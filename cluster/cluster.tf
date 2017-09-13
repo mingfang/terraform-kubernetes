@@ -43,9 +43,14 @@ variable "admin_subnets" {
   default = ["10.248.51.0/24", "10.248.52.0/24", "10.248.53.0/24"]
 }
 
+variable "db_subnets" {
+  type    = "list"
+  default = ["10.248.61.0/24", "10.248.62.0/24", "10.248.63.0/24"]
+}
+
 variable "kmaster_subnets" {
   type    = "list"
-  default = ["10.248.101.0/24", "10.248.102.0/24", "10.248.103.0/24"]
+  default = ["10.248.91.0/24", "10.248.92.0/24", "10.248.93.0/24"]
 }
 
 variable "peering_subnets" {
@@ -65,7 +70,6 @@ resource "aws_key_pair" "cluster_key_pair" {
     create_before_destroy = true
   }
 }
-
 
 module "vpc" {
   source = "../vpc"
@@ -87,11 +91,8 @@ module "network" {
   green_subnets   = "${var.green_subnets}"
   net_subnets     = "${var.net_subnets}"
   admin_subnets   = "${var.admin_subnets}"
+  db_subnets      = "${var.db_subnets}"
   kmaster_subnets = "${var.kmaster_subnets}"
-}
-
-module "admin_zone" {
-  source = "../empty"
 }
 
 module "kmaster" {
@@ -139,11 +140,44 @@ module "net_zone" {
   alb_enable = false
 }
 
+module "db_zone" {
+  source = "../vpc/knode"
+
+  zone       = "db"
+  size       = 1
+  name       = "${var.name}-knodes-db"
+  subnet_ids = "${module.network.db_subnet_ids}"
+
+  vpc_id   = "${module.vpc.id}"
+  vpc_cidr = "${module.vpc.cidr}"
+  azs      = "${var.azs}"
+  key_name = "${aws_key_pair.cluster_key_pair.key_name}"
+
+  alb_enable = false
+}
+
+module "admin_zone" {
+  source = "../vpc/knode"
+
+  zone       = "admin"
+  size       = 1
+  name       = "${var.name}-knodes-admin"
+  subnet_ids = "${module.network.admin_subnet_ids}"
+
+  vpc_id   = "${module.vpc.id}"
+  vpc_cidr = "${module.vpc.cidr}"
+  azs      = "${var.azs}"
+  key_name = "${aws_key_pair.cluster_key_pair.key_name}"
+
+  alb_enable = true
+  alb_route53_zone_id = "${module.network.route53_private_id}"
+}
+
 module "com_zone" {
   source = "../vpc/knode"
 
   zone       = "com"
-  size       = 1
+  size       = 2
   name       = "${var.name}-knodes-com"
   subnet_ids = "${module.network.com_subnet_ids}"
 
