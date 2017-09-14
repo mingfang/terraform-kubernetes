@@ -2,6 +2,10 @@
 
 variable "name" {}
 
+variable "public_domain" {
+  default = "noname.com"
+}
+
 variable "vpc_id" {}
 
 variable "vpc_cidr" {}
@@ -48,9 +52,15 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
-module "public_subnets" {
-  source = "./public_subnet"
+module "nats" {
+  source            = "./nat"
+  name              = "${var.name}-nat"
+  azs               = "${var.azs}"
+  public_subnet_ids = "${module.public_subnets.ids}"
+}
 
+module "public_subnets" {
+  source              = "./public_subnet"
   name                = "${var.name}-public"
   vpc_id              = "${var.vpc_id}"
   cidrs               = "${var.public_subnets}"
@@ -58,17 +68,8 @@ module "public_subnets" {
   internet_gateway_id = "${aws_internet_gateway.gw.id}"
 }
 
-module "nats" {
-  source = "./nat"
-
-  name              = "${var.name}-nat"
-  azs               = "${var.azs}"
-  public_subnet_ids = "${module.public_subnets.ids}"
-}
-
 module "com_subnets" {
-  source = "./private_subnet"
-
+  source          = "./private_subnet"
   name            = "${var.name}-com"
   cidrs           = "${var.com_subnets}"
   vpc_id          = "${var.vpc_id}"
@@ -77,8 +78,7 @@ module "com_subnets" {
 }
 
 module "green_subnets" {
-  source = "./private_subnet"
-
+  source          = "./private_subnet"
   name            = "${var.name}-green"
   cidrs           = "${var.green_subnets}"
   vpc_id          = "${var.vpc_id}"
@@ -87,8 +87,7 @@ module "green_subnets" {
 }
 
 module "net_subnets" {
-  source = "./private_subnet"
-
+  source          = "./private_subnet"
   name            = "${var.name}-net"
   cidrs           = "${var.net_subnets}"
   vpc_id          = "${var.vpc_id}"
@@ -97,46 +96,45 @@ module "net_subnets" {
 }
 
 module "admin_subnets" {
-  source = "./private_subnet"
-
-  name   = "${var.name}-admin"
-  cidrs  = "${var.admin_subnets}"
-  vpc_id = "${var.vpc_id}"
-  azs    = "${var.azs}"
-
+  source          = "./private_subnet"
+  name            = "${var.name}-admin"
+  cidrs           = "${var.admin_subnets}"
+  vpc_id          = "${var.vpc_id}"
+  azs             = "${var.azs}"
   nat_gateway_ids = "${module.nats.ids}"
 }
 
 module "db_subnets" {
-  source = "./private_subnet"
-
-  name   = "${var.name}-db"
-  cidrs  = "${var.db_subnets}"
-  vpc_id = "${var.vpc_id}"
-  azs    = "${var.azs}"
-
+  source          = "./private_subnet"
+  name            = "${var.name}-db"
+  cidrs           = "${var.db_subnets}"
+  vpc_id          = "${var.vpc_id}"
+  azs             = "${var.azs}"
   nat_gateway_ids = "${module.nats.ids}"
 }
 
-//todo: public for testing; make private
 module "kmaster_subnets" {
-  //  source = "./private_subnet"
-  source = "./public_subnet"
-
-  name   = "${var.name}-kmaster"
-  cidrs  = "${var.kmaster_subnets}"
-  vpc_id = "${var.vpc_id}"
-  azs    = "${var.azs}"
-
-  //  nat_gateway_ids = "${module.nats.nat_gateway_ids}"
-  internet_gateway_id = "${aws_internet_gateway.gw.id}"
+  source          = "./private_subnet"
+  name            = "${var.name}-kmaster"
+  cidrs           = "${var.kmaster_subnets}"
+  vpc_id          = "${var.vpc_id}"
+  azs             = "${var.azs}"
+  nat_gateway_ids = "${module.nats.ids}"
 }
 
 resource "aws_network_acl" "acl" {
   vpc_id = "${var.vpc_id}"
 
   subnet_ids = [
-    "${concat(module.public_subnets.ids, module.com_subnets.ids, module.green_subnets.ids, module.net_subnets.ids, module.admin_subnets.ids, module.kmaster_subnets.ids)}",
+    "${concat(
+        module.public_subnets.ids,
+        module.com_subnets.ids,
+        module.green_subnets.ids,
+        module.net_subnets.ids,
+        module.admin_subnets.ids,
+        module.db_subnets.ids,
+        module.kmaster_subnets.ids
+    )}",
   ]
 
   ingress {
@@ -165,6 +163,10 @@ resource "aws_network_acl" "acl" {
 resource "aws_route53_zone" "private" {
   name   = "local"
   vpc_id = "${var.vpc_id}"
+}
+
+resource "aws_route53_zone" "public" {
+  name = "${var.public_domain}"
 }
 
 # Output
@@ -203,4 +205,8 @@ output "nat_gateway_ids" {
 
 output "route53_private_id" {
   value = "${aws_route53_zone.private.id}"
+}
+
+output "route53_public_id" {
+  value = "${aws_route53_zone.public.id}"
 }
