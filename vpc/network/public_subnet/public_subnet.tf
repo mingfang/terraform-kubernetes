@@ -1,3 +1,5 @@
+# Variables
+
 variable "name" {}
 
 variable "vpc_id" {}
@@ -13,6 +15,8 @@ variable "azs" {
 variable "internet_gateway_id" {
   default = ""
 }
+
+# Resources
 
 resource "aws_subnet" "subnets" {
   count                   = "${length(var.cidrs)}"
@@ -56,6 +60,8 @@ resource "aws_route_table_association" "route_association" {
     create_before_destroy = true
   }
 }
+
+# Output
 
 output "ids" {
   value = ["${aws_subnet.subnets.*.id}"]
