@@ -20,22 +20,34 @@ variable "instance_type" {
   default = "t2.micro"
 }
 
-variable "alb_route53_zone_id" {}
+variable "alb_route53_zone_id_private" {
+  default = ""
+}
+
+variable "alb_route53_zone_id_public" {
+  default = ""
+}
+
+variable "alb_subnet_ids" {
+  type    = "list"
+  default = []
+}
 
 # Resources
 
 module "alb" {
-  source = "../network/alb"
-
-  name            = "${var.name}"
-  vpc_id          = "${var.vpc_id}"
-  subnet_ids      = ["${var.subnet_ids}"]
-  ports           = ["8080", "4001"]
-  protocols       = ["HTTP", "HTTP"]
-  health_checks   = ["/healthz", "/health"]
-  internal        = false                        //todo, should be true
-  dns_name        = "kmaster"
-  route53_zone_id = "${var.alb_route53_zone_id}"
+  source                  = "../network/alb"
+  name                    = "${var.name}"
+  vpc_id                  = "${var.vpc_id}"
+  subnet_ids              = ["${var.alb_subnet_ids}"]
+  ports                   = ["8080", "4001"]
+  protocols               = ["HTTP", "HTTP"]
+  health_checks           = ["/healthz", "/health"]
+  internal                = false                                //todo, should be true
+  dns_name_private        = "kmaster"
+  route53_zone_id_private = "${var.alb_route53_zone_id_private}"
+  dns_names_public        = ["kmaster"]
+  route53_zone_id_public  = "${var.alb_route53_zone_id_public}"
 }
 
 data "aws_ami" "kubernetes" {

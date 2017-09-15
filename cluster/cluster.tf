@@ -2,6 +2,8 @@
 
 variable "name" {}
 
+variable "public_domain" {}
+
 variable "access_key" {}
 
 variable "secret_key" {}
@@ -83,6 +85,7 @@ module "network" {
   source = "../vpc/network"
 
   name            = "${var.name}"
+  public_domain   = "${var.public_domain}"
   vpc_id          = "${module.vpc.id}"
   vpc_cidr        = "${module.vpc.cidr}"
   azs             = "${var.azs}"
@@ -96,16 +99,16 @@ module "network" {
 }
 
 module "kmaster" {
-  source = "../vpc/kmaster"
-
-  name       = "${var.name}-kmaster"
-  vpc_id     = "${module.vpc.id}"
-  vpc_cidr   = "${var.vpc_cidr}"
-  azs        = "${var.azs}"
-  subnet_ids = "${module.network.kmaster_subnet_ids}"
-  key_name   = "${aws_key_pair.cluster_key_pair.key_name}"
-
-  alb_route53_zone_id = "${module.network.route53_private_id}"
+  source                      = "../vpc/kmaster"
+  name                        = "${var.name}-kmaster"
+  vpc_id                      = "${module.vpc.id}"
+  vpc_cidr                    = "${var.vpc_cidr}"
+  azs                         = "${var.azs}"
+  subnet_ids                  = "${module.network.kmaster_subnet_ids}"
+  key_name                    = "${aws_key_pair.cluster_key_pair.key_name}"
+  alb_route53_zone_id_private = "${module.network.route53_private_id}"
+  alb_route53_zone_id_public  = "${module.network.route53_public_id}"
+  alb_subnet_ids              = "${module.network.public_subnet_ids}"
 }
 
 module "green_zone" {
@@ -115,11 +118,10 @@ module "green_zone" {
   size       = 1
   name       = "${var.name}-knodes-green"
   subnet_ids = "${module.network.green_subnet_ids}"
-
-  vpc_id   = "${module.vpc.id}"
-  vpc_cidr = "${module.vpc.cidr}"
-  azs      = "${var.azs}"
-  key_name = "${aws_key_pair.cluster_key_pair.key_name}"
+  vpc_id     = "${module.vpc.id}"
+  vpc_cidr   = "${module.vpc.cidr}"
+  azs        = "${var.azs}"
+  key_name   = "${aws_key_pair.cluster_key_pair.key_name}"
 
   alb_enable = false
 }
@@ -152,8 +154,6 @@ module "db_zone" {
   vpc_cidr = "${module.vpc.cidr}"
   azs      = "${var.azs}"
   key_name = "${aws_key_pair.cluster_key_pair.key_name}"
-
-  alb_enable = false
 }
 
 module "admin_zone" {
@@ -169,8 +169,13 @@ module "admin_zone" {
   azs      = "${var.azs}"
   key_name = "${aws_key_pair.cluster_key_pair.key_name}"
 
-  alb_enable = true
-  alb_route53_zone_id = "${module.network.route53_private_id}"
+  alb_enable                  = true
+  alb_internal                = false
+  alb_subnet_ids              = "${module.network.public_subnet_ids}"
+  alb_dns_name_private        = "admin"
+  alb_route53_zone_id_private = "${module.network.route53_private_id}"
+  alb_dns_names_public        = ["*.admin.${var.public_domain}"]
+  alb_route53_zone_id_public  = "${module.network.route53_public_id}"
 }
 
 module "com_zone" {
@@ -186,11 +191,11 @@ module "com_zone" {
   azs      = "${var.azs}"
   key_name = "${aws_key_pair.cluster_key_pair.key_name}"
 
-  alb_enable          = true
-  alb_internal        = false
-  alb_dns_name        = "com"
-  alb_route53_zone_id = "${module.network.route53_private_id}"
-  alb_subnet_ids      = "${module.network.public_subnet_ids}"
+  alb_enable                  = true
+  alb_internal                = false
+  alb_subnet_ids              = "${module.network.public_subnet_ids}"
+  alb_dns_name_private        = "com"
+  alb_route53_zone_id_private = "${module.network.route53_private_id}"
 }
 
 # OUTPUTS

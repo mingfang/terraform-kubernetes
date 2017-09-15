@@ -32,11 +32,11 @@ variable "alb_internal" {
   default = true
 }
 
-variable "alb_dns_name" {
+variable "alb_dns_name_private" {
   default = ""
 }
 
-variable "alb_route53_zone_id" {
+variable "alb_route53_zone_id_private" {
   default = ""
 }
 
@@ -45,21 +45,32 @@ variable "alb_subnet_ids" {
   default = []
 }
 
+variable "alb_dns_names_public" {
+  type    = "list"
+  default = []
+}
+
+variable "alb_route53_zone_id_public" {
+  default = ""
+}
+
 # Resources
 
 module "alb" {
   source = "../network/alb"
   enable = "${var.alb_enable}"
 
-  name            = "${var.name}"
-  vpc_id          = "${var.vpc_id}"
-  subnet_ids      = ["${var.alb_subnet_ids}"]
-  ports           = ["80"]
-  protocols       = ["HTTP"]                     //todo need cert for HTTPS
-  health_checks   = ["/lbstatus"]
-  internal        = "${var.alb_internal}"
-  dns_name        = "${var.alb_dns_name}"
-  route53_zone_id = "${var.alb_route53_zone_id}"
+  name                    = "${var.name}"
+  vpc_id                  = "${var.vpc_id}"
+  subnet_ids              = ["${var.alb_subnet_ids}"]
+  ports                   = ["80"]
+  protocols               = ["HTTP"]                             //todo need cert for HTTPS
+  health_checks           = ["/lbstatus"]
+  internal                = "${var.alb_internal}"
+  dns_name_private        = "${var.alb_dns_name_private}"
+  route53_zone_id_private = "${var.alb_route53_zone_id_private}"
+  dns_names_public        = "${var.alb_dns_names_public}"
+  route53_zone_id_public  = "${var.alb_route53_zone_id_public}"
 }
 
 data "aws_ami" "kubernetes" {
