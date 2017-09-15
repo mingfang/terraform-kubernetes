@@ -17,7 +17,7 @@ variable "azs" {
 }
 
 variable "com_size" {
-  default = 2
+  default = 1
 }
 
 variable "green_size" {
@@ -34,6 +34,30 @@ variable "db_size" {
 
 variable "admin_size" {
   default = 1
+}
+
+variable com_instance_type {
+  default = "t2.micro"
+}
+
+variable green_instance_type {
+  default = "t2.micro"
+}
+
+variable net_instance_type {
+  default = "t2.micro"
+}
+
+variable db_instance_type {
+  default = "t2.micro"
+}
+
+variable admin_instance_type {
+  default = "t2.micro"
+}
+
+variable kmaster_instance_type {
+  default = "t2.micro"
 }
 
 variable "vpc_cidr" {
@@ -113,6 +137,7 @@ module "network" {
 module "kmaster" {
   source                      = "./kmaster"
   name                        = "${var.name}-kmaster"
+  instance_type               = "${var.kmaster_instance_type}"
   vpc_id                      = "${module.vpc.id}"
   vpc_cidr                    = "${var.vpc_cidr}"
   azs                         = "${var.azs}"
@@ -125,55 +150,59 @@ module "kmaster" {
 }
 
 module "green_zone" {
-  source   = "./knode"
-  name     = "${var.name}-knodes-green"
-  zone     = "green"
-  size     = "${var.green_size}"
-  vpc_id   = "${module.vpc.id}"
-  vpc_cidr = "${var.vpc_cidr}"
-  azs      = "${var.azs}"
-  nat_ids  = "${module.network.nat_gateway_ids}"
-  subnets  = "${var.green_subnets}"
-  key_name = "${aws_key_pair.cluster_key_pair.key_name}"
+  source        = "./knode"
+  name          = "${var.name}-knodes-green"
+  zone          = "green"
+  size          = "${var.green_size}"
+  instance_type = "${var.green_instance_type}"
+  vpc_id        = "${module.vpc.id}"
+  vpc_cidr      = "${var.vpc_cidr}"
+  azs           = "${var.azs}"
+  nat_ids       = "${module.network.nat_gateway_ids}"
+  subnets       = "${var.green_subnets}"
+  key_name      = "${aws_key_pair.cluster_key_pair.key_name}"
 }
 
 module "net_zone" {
-  source   = "./knode"
-  name     = "${var.name}-knodes-net"
-  zone     = "net"
-  size     = "${var.net_size}"
-  subnets  = "${var.net_subnets}"
-  vpc_id   = "${module.vpc.id}"
-  vpc_cidr = "${var.vpc_cidr}"
-  azs      = "${var.azs}"
-  nat_ids  = "${module.network.nat_gateway_ids}"
-  key_name = "${aws_key_pair.cluster_key_pair.key_name}"
+  source        = "./knode"
+  name          = "${var.name}-knodes-net"
+  zone          = "net"
+  size          = "${var.net_size}"
+  instance_type = "${var.net_instance_type}"
+  subnets       = "${var.net_subnets}"
+  vpc_id        = "${module.vpc.id}"
+  vpc_cidr      = "${var.vpc_cidr}"
+  azs           = "${var.azs}"
+  nat_ids       = "${module.network.nat_gateway_ids}"
+  key_name      = "${aws_key_pair.cluster_key_pair.key_name}"
 }
 
 module "db_zone" {
-  source   = "./knode"
-  name     = "${var.name}-knodes-db"
-  zone     = "db"
-  size     = "${var.db_size}"
-  subnets  = "${var.db_subnets}"
-  vpc_id   = "${module.vpc.id}"
-  vpc_cidr = "${var.vpc_cidr}"
-  azs      = "${var.azs}"
-  nat_ids  = "${module.network.nat_gateway_ids}"
-  key_name = "${aws_key_pair.cluster_key_pair.key_name}"
+  source        = "./knode"
+  name          = "${var.name}-knodes-db"
+  zone          = "db"
+  size          = "${var.db_size}"
+  instance_type = "${var.db_instance_type}"
+  subnets       = "${var.db_subnets}"
+  vpc_id        = "${module.vpc.id}"
+  vpc_cidr      = "${var.vpc_cidr}"
+  azs           = "${var.azs}"
+  nat_ids       = "${module.network.nat_gateway_ids}"
+  key_name      = "${aws_key_pair.cluster_key_pair.key_name}"
 }
 
 module "admin_zone" {
-  source   = "./knode"
-  name     = "${var.name}-knodes-admin"
-  zone     = "admin"
-  size     = "${var.admin_size}"
-  subnets  = "${var.admin_subnets}"
-  vpc_id   = "${module.vpc.id}"
-  vpc_cidr = "${var.vpc_cidr}"
-  azs      = "${var.azs}"
-  nat_ids  = "${module.network.nat_gateway_ids}"
-  key_name = "${aws_key_pair.cluster_key_pair.key_name}"
+  source        = "./knode"
+  name          = "${var.name}-knodes-admin"
+  zone          = "admin"
+  size          = "${var.admin_size}"
+  instance_type = "${var.admin_instance_type}"
+  subnets       = "${var.admin_subnets}"
+  vpc_id        = "${module.vpc.id}"
+  vpc_cidr      = "${var.vpc_cidr}"
+  azs           = "${var.azs}"
+  nat_ids       = "${module.network.nat_gateway_ids}"
+  key_name      = "${aws_key_pair.cluster_key_pair.key_name}"
 
   alb_enable                  = true
   alb_internal                = false
