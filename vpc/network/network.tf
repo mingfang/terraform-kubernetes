@@ -3,7 +3,7 @@
 variable "name" {}
 
 variable "public_domain" {
-  default = "noname.com"
+  default = ""
 }
 
 variable "vpc_id" {}
@@ -166,6 +166,7 @@ resource "aws_route53_zone" "private" {
 }
 
 resource "aws_route53_zone" "public" {
+  count = "${length(var.public_domain) > 0 ? 1 : 0}"
   name = "${var.public_domain}"
 }
 
