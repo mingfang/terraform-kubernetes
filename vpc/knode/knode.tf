@@ -12,17 +12,21 @@ variable "azs" {
   type = "list"
 }
 
-variable "subnet_ids" {
+variable "subnets" {
   type = "list"
+}
+
+variable "nat_ids" {
+  type = "list"
+}
+
+variable "instance_type" {
+  default = "t2.micro"
 }
 
 variable "zone" {}
 
 variable "size" {}
-
-variable "instance_type" {
-  default = "t2.micro"
-}
 
 variable "alb_enable" {
   default = false
@@ -36,7 +40,16 @@ variable "alb_dns_name_private" {
   default = ""
 }
 
+variable "alb_dns_names_public" {
+  type    = "list"
+  default = []
+}
+
 variable "alb_route53_zone_id_private" {
+  default = ""
+}
+
+variable "alb_route53_zone_id_public" {
   default = ""
 }
 
@@ -45,21 +58,20 @@ variable "alb_subnet_ids" {
   default = []
 }
 
-variable "alb_dns_names_public" {
-  type    = "list"
-  default = []
-}
-
-variable "alb_route53_zone_id_public" {
-  default = ""
-}
-
 # Resources
 
-module "alb" {
-  source = "../network/alb"
-  enable = "${var.alb_enable}"
+module "subnets" {
+  source          = "../network/private_subnet"
+  name            = "${var.name}-com"
+  cidrs           = "${var.subnets}"
+  vpc_id          = "${var.vpc_id}"
+  azs             = "${var.azs}"
+  nat_gateway_ids = "${var.nat_ids}"
+}
 
+module "alb" {
+  source                  = "../network/alb"
+  enable                  = "${var.alb_enable}"
   name                    = "${var.name}"
   vpc_id                  = "${var.vpc_id}"
   subnet_ids              = ["${var.alb_subnet_ids}"]
@@ -112,7 +124,7 @@ resource "aws_autoscaling_group" "asg" {
   min_size             = "${var.size}"
   max_size             = "${var.size}"
   launch_configuration = "${aws_launch_configuration.lc.name}"
-  vpc_zone_identifier  = ["${var.subnet_ids}"]
+  vpc_zone_identifier  = ["${module.subnets.ids}"]
   target_group_arns    = ["${module.alb.target_group_arns}"]
 
   tag {
@@ -160,4 +172,10 @@ resource "aws_security_group" "sg" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# Outputs
+
+output "subnet_ids" {
+  value = "${module.subnets.ids}"
 }

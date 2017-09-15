@@ -18,30 +18,6 @@ variable "public_subnets" {
   type = "list"
 }
 
-variable "com_subnets" {
-  type = "list"
-}
-
-variable "green_subnets" {
-  type = "list"
-}
-
-variable "net_subnets" {
-  type = "list"
-}
-
-variable "admin_subnets" {
-  type = "list"
-}
-
-variable "db_subnets" {
-  type = "list"
-}
-
-variable "kmaster_subnets" {
-  type = "list"
-}
-
 # Resources
 
 resource "aws_internet_gateway" "gw" {
@@ -68,98 +44,6 @@ module "public_subnets" {
   internet_gateway_id = "${aws_internet_gateway.gw.id}"
 }
 
-module "com_subnets" {
-  source          = "./private_subnet"
-  name            = "${var.name}-com"
-  cidrs           = "${var.com_subnets}"
-  vpc_id          = "${var.vpc_id}"
-  azs             = "${var.azs}"
-  nat_gateway_ids = "${module.nats.ids}"
-}
-
-module "green_subnets" {
-  source          = "./private_subnet"
-  name            = "${var.name}-green"
-  cidrs           = "${var.green_subnets}"
-  vpc_id          = "${var.vpc_id}"
-  azs             = "${var.azs}"
-  nat_gateway_ids = "${module.nats.ids}"
-}
-
-module "net_subnets" {
-  source          = "./private_subnet"
-  name            = "${var.name}-net"
-  cidrs           = "${var.net_subnets}"
-  vpc_id          = "${var.vpc_id}"
-  azs             = "${var.azs}"
-  nat_gateway_ids = "${module.nats.ids}"
-}
-
-module "admin_subnets" {
-  source          = "./private_subnet"
-  name            = "${var.name}-admin"
-  cidrs           = "${var.admin_subnets}"
-  vpc_id          = "${var.vpc_id}"
-  azs             = "${var.azs}"
-  nat_gateway_ids = "${module.nats.ids}"
-}
-
-module "db_subnets" {
-  source          = "./private_subnet"
-  name            = "${var.name}-db"
-  cidrs           = "${var.db_subnets}"
-  vpc_id          = "${var.vpc_id}"
-  azs             = "${var.azs}"
-  nat_gateway_ids = "${module.nats.ids}"
-}
-
-module "kmaster_subnets" {
-  source          = "./private_subnet"
-  name            = "${var.name}-kmaster"
-  cidrs           = "${var.kmaster_subnets}"
-  vpc_id          = "${var.vpc_id}"
-  azs             = "${var.azs}"
-  nat_gateway_ids = "${module.nats.ids}"
-}
-
-resource "aws_network_acl" "acl" {
-  vpc_id = "${var.vpc_id}"
-
-  subnet_ids = [
-    "${concat(
-        module.public_subnets.ids,
-        module.com_subnets.ids,
-        module.green_subnets.ids,
-        module.net_subnets.ids,
-        module.admin_subnets.ids,
-        module.db_subnets.ids,
-        module.kmaster_subnets.ids
-    )}",
-  ]
-
-  ingress {
-    protocol   = "-1"
-    rule_no    = 100
-    action     = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port  = 0
-    to_port    = 0
-  }
-
-  egress {
-    protocol   = "-1"
-    rule_no    = 100
-    action     = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port  = 0
-    to_port    = 0
-  }
-
-  tags {
-    Name = "${var.name}-all"
-  }
-}
-
 resource "aws_route53_zone" "private" {
   name   = "local"
   vpc_id = "${var.vpc_id}"
@@ -167,37 +51,13 @@ resource "aws_route53_zone" "private" {
 
 resource "aws_route53_zone" "public" {
   count = "${length(var.public_domain) > 0 ? 1 : 0}"
-  name = "${var.public_domain}"
+  name  = "${var.public_domain}"
 }
 
 # Output
 
 output "public_subnet_ids" {
   value = "${module.public_subnets.ids}"
-}
-
-output "kmaster_subnet_ids" {
-  value = "${module.kmaster_subnets.ids}"
-}
-
-output "green_subnet_ids" {
-  value = "${module.green_subnets.ids}"
-}
-
-output "net_subnet_ids" {
-  value = "${module.net_subnets.ids}"
-}
-
-output "admin_subnet_ids" {
-  value = "${module.admin_subnets.ids}"
-}
-
-output "db_subnet_ids" {
-  value = "${module.db_subnets.ids}"
-}
-
-output "com_subnet_ids" {
-  value = "${module.com_subnets.ids}"
 }
 
 output "nat_gateway_ids" {

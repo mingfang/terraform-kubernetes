@@ -12,7 +12,11 @@ variable "azs" {
   type = "list"
 }
 
-variable "subnet_ids" {
+variable "subnets" {
+  type = "list"
+}
+
+variable "nat_ids" {
   type = "list"
 }
 
@@ -34,6 +38,15 @@ variable "alb_subnet_ids" {
 }
 
 # Resources
+
+module "subnets" {
+  source          = "../network/private_subnet"
+  name            = "${var.name}-kmaster"
+  cidrs           = "${var.subnets}"
+  vpc_id          = "${var.vpc_id}"
+  azs             = "${var.azs}"
+  nat_gateway_ids = "${var.nat_ids}"
+}
 
 module "alb" {
   source                  = "../network/alb"
@@ -86,7 +99,7 @@ resource "aws_autoscaling_group" "asg" {
   min_size             = 1
   max_size             = 1
   launch_configuration = "${aws_launch_configuration.lc.name}"
-  vpc_zone_identifier  = ["${var.subnet_ids}"]
+  vpc_zone_identifier  = ["${module.subnets.ids}"]
   target_group_arns    = ["${module.alb.target_group_arns}"]
 
   tag {
@@ -148,4 +161,10 @@ resource "aws_security_group" "sg" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# Outputs
+
+output "subnet_ids" {
+  value = "${module.subnets.ids}"
 }

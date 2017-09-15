@@ -16,6 +16,26 @@ variable "azs" {
   type = "list"
 }
 
+variable "com_size" {
+  default = 2
+}
+
+variable "green_size" {
+  default = 1
+}
+
+variable "net_size" {
+  default = 1
+}
+
+variable "db_size" {
+  default = 1
+}
+
+variable "admin_size" {
+  default = 1
+}
+
 variable "vpc_cidr" {
   default = "10.248.0.0/16"
 }
@@ -75,27 +95,19 @@ resource "aws_key_pair" "cluster_key_pair" {
 
 module "vpc" {
   source = "../vpc"
-
   name   = "${var.name}-vpc"
   cidr   = "${var.vpc_cidr}"
   region = "${var.region}"
 }
 
 module "network" {
-  source = "../vpc/network"
-
-  name            = "${var.name}"
-  public_domain   = "${var.public_domain}"
-  vpc_id          = "${module.vpc.id}"
-  vpc_cidr        = "${module.vpc.cidr}"
-  azs             = "${var.azs}"
-  public_subnets  = "${var.public_subnets}"
-  com_subnets     = "${var.com_subnets}"
-  green_subnets   = "${var.green_subnets}"
-  net_subnets     = "${var.net_subnets}"
-  admin_subnets   = "${var.admin_subnets}"
-  db_subnets      = "${var.db_subnets}"
-  kmaster_subnets = "${var.kmaster_subnets}"
+  source         = "../vpc/network"
+  name           = "${var.name}"
+  public_domain  = "${var.public_domain}"
+  vpc_id         = "${module.vpc.id}"
+  vpc_cidr       = "${module.vpc.cidr}"
+  azs            = "${var.azs}"
+  public_subnets = "${var.public_subnets}"
 }
 
 module "kmaster" {
@@ -104,7 +116,8 @@ module "kmaster" {
   vpc_id                      = "${module.vpc.id}"
   vpc_cidr                    = "${var.vpc_cidr}"
   azs                         = "${var.azs}"
-  subnet_ids                  = "${module.network.kmaster_subnet_ids}"
+  nat_ids                     = "${module.network.nat_gateway_ids}"
+  subnets                     = "${var.kmaster_subnets}"
   key_name                    = "${aws_key_pair.cluster_key_pair.key_name}"
   alb_route53_zone_id_private = "${module.network.route53_private_id}"
   alb_route53_zone_id_public  = "${module.network.route53_public_id}"
@@ -112,61 +125,54 @@ module "kmaster" {
 }
 
 module "green_zone" {
-  source = "../vpc/knode"
-
-  zone       = "green"
-  size       = 1
-  name       = "${var.name}-knodes-green"
-  subnet_ids = "${module.network.green_subnet_ids}"
-  vpc_id     = "${module.vpc.id}"
-  vpc_cidr   = "${module.vpc.cidr}"
-  azs        = "${var.azs}"
-  key_name   = "${aws_key_pair.cluster_key_pair.key_name}"
-
-  alb_enable = false
+  source   = "../vpc/knode"
+  name     = "${var.name}-knodes-green"
+  zone     = "green"
+  size     = "${var.green_size}"
+  vpc_id   = "${module.vpc.id}"
+  vpc_cidr = "${var.vpc_cidr}"
+  azs      = "${var.azs}"
+  nat_ids  = "${module.network.nat_gateway_ids}"
+  subnets  = "${var.green_subnets}"
+  key_name = "${aws_key_pair.cluster_key_pair.key_name}"
 }
 
 module "net_zone" {
-  source = "../vpc/knode"
-
-  zone       = "net"
-  size       = 1
-  name       = "${var.name}-knodes-net"
-  subnet_ids = "${module.network.net_subnet_ids}"
-
+  source   = "../vpc/knode"
+  name     = "${var.name}-knodes-net"
+  zone     = "net"
+  size     = "${var.net_size}"
+  subnets  = "${var.net_subnets}"
   vpc_id   = "${module.vpc.id}"
-  vpc_cidr = "${module.vpc.cidr}"
+  vpc_cidr = "${var.vpc_cidr}"
   azs      = "${var.azs}"
+  nat_ids  = "${module.network.nat_gateway_ids}"
   key_name = "${aws_key_pair.cluster_key_pair.key_name}"
-
-  alb_enable = false
 }
 
 module "db_zone" {
-  source = "../vpc/knode"
-
-  zone       = "db"
-  size       = 1
-  name       = "${var.name}-knodes-db"
-  subnet_ids = "${module.network.db_subnet_ids}"
-
+  source   = "../vpc/knode"
+  name     = "${var.name}-knodes-db"
+  zone     = "db"
+  size     = "${var.db_size}"
+  subnets  = "${var.db_subnets}"
   vpc_id   = "${module.vpc.id}"
-  vpc_cidr = "${module.vpc.cidr}"
+  vpc_cidr = "${var.vpc_cidr}"
   azs      = "${var.azs}"
+  nat_ids  = "${module.network.nat_gateway_ids}"
   key_name = "${aws_key_pair.cluster_key_pair.key_name}"
 }
 
 module "admin_zone" {
-  source = "../vpc/knode"
-
-  zone       = "admin"
-  size       = 1
-  name       = "${var.name}-knodes-admin"
-  subnet_ids = "${module.network.admin_subnet_ids}"
-
+  source   = "../vpc/knode"
+  name     = "${var.name}-knodes-admin"
+  zone     = "admin"
+  size     = "${var.admin_size}"
+  subnets  = "${var.admin_subnets}"
   vpc_id   = "${module.vpc.id}"
-  vpc_cidr = "${module.vpc.cidr}"
+  vpc_cidr = "${var.vpc_cidr}"
   azs      = "${var.azs}"
+  nat_ids  = "${module.network.nat_gateway_ids}"
   key_name = "${aws_key_pair.cluster_key_pair.key_name}"
 
   alb_enable                  = true
@@ -179,16 +185,15 @@ module "admin_zone" {
 }
 
 module "com_zone" {
-  source = "../vpc/knode"
-
-  zone       = "com"
-  size       = 2
-  name       = "${var.name}-knodes-com"
-  subnet_ids = "${module.network.com_subnet_ids}"
-
+  source   = "../vpc/knode"
+  name     = "${var.name}-knodes-com"
+  zone     = "com"
+  size     = "${var.com_size}"
+  subnets  = "${var.com_subnets}"
   vpc_id   = "${module.vpc.id}"
-  vpc_cidr = "${module.vpc.cidr}"
+  vpc_cidr = "${var.vpc_cidr}"
   azs      = "${var.azs}"
+  nat_ids  = "${module.network.nat_gateway_ids}"
   key_name = "${aws_key_pair.cluster_key_pair.key_name}"
 
   alb_enable                  = true
@@ -196,6 +201,44 @@ module "com_zone" {
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
   alb_dns_name_private        = "com"
   alb_route53_zone_id_private = "${module.network.route53_private_id}"
+}
+
+resource "aws_network_acl" "acl" {
+  vpc_id = "${module.vpc.id}"
+
+  subnet_ids = [
+    "${concat(
+        module.network.public_subnet_ids,
+        module.com_zone.subnet_ids,
+        module.green_zone.subnet_ids,
+        module.net_zone.subnet_ids,
+        module.admin_zone.subnet_ids,
+        module.db_zone.subnet_ids,
+        module.kmaster.subnet_ids
+    )}",
+  ]
+
+  ingress {
+    protocol   = "-1"
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  egress {
+    protocol   = "-1"
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  tags {
+    Name = "${var.name}-all"
+  }
 }
 
 # OUTPUTS

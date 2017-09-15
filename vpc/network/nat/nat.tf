@@ -15,9 +15,8 @@ variable "public_subnet_ids" {
 }
 
 resource "aws_eip" "nat" {
-  vpc = true
-
   count = "${length(var.azs)}"
+  vpc   = true
 
   lifecycle {
     create_before_destroy = true
@@ -25,10 +24,9 @@ resource "aws_eip" "nat" {
 }
 
 resource "aws_nat_gateway" "nat" {
+  count         = "${length(var.azs)}"
   allocation_id = "${element(aws_eip.nat.*.id, count.index)}"
   subnet_id     = "${element(var.public_subnet_ids, count.index)}"
-
-  count = "${length(var.azs)}"
 
   lifecycle {
     create_before_destroy = true
