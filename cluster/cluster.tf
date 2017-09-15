@@ -111,7 +111,7 @@ module "network" {
 }
 
 module "kmaster" {
-  source                      = "../vpc/kmaster"
+  source                      = "./kmaster"
   name                        = "${var.name}-kmaster"
   vpc_id                      = "${module.vpc.id}"
   vpc_cidr                    = "${var.vpc_cidr}"
@@ -125,7 +125,7 @@ module "kmaster" {
 }
 
 module "green_zone" {
-  source   = "../vpc/knode"
+  source   = "./knode"
   name     = "${var.name}-knodes-green"
   zone     = "green"
   size     = "${var.green_size}"
@@ -138,7 +138,7 @@ module "green_zone" {
 }
 
 module "net_zone" {
-  source   = "../vpc/knode"
+  source   = "./knode"
   name     = "${var.name}-knodes-net"
   zone     = "net"
   size     = "${var.net_size}"
@@ -151,7 +151,7 @@ module "net_zone" {
 }
 
 module "db_zone" {
-  source   = "../vpc/knode"
+  source   = "./knode"
   name     = "${var.name}-knodes-db"
   zone     = "db"
   size     = "${var.db_size}"
@@ -164,7 +164,7 @@ module "db_zone" {
 }
 
 module "admin_zone" {
-  source   = "../vpc/knode"
+  source   = "./knode"
   name     = "${var.name}-knodes-admin"
   zone     = "admin"
   size     = "${var.admin_size}"
@@ -185,7 +185,7 @@ module "admin_zone" {
 }
 
 module "com_zone" {
-  source   = "../vpc/knode"
+  source   = "./knode"
   name     = "${var.name}-knodes-com"
   zone     = "com"
   size     = "${var.com_size}"

@@ -61,7 +61,7 @@ variable "alb_subnet_ids" {
 # Resources
 
 module "subnets" {
-  source          = "../network/private_subnet"
+  source          = "../../vpc/network/private_subnet"
   name            = "${var.name}-com"
   cidrs           = "${var.subnets}"
   vpc_id          = "${var.vpc_id}"
@@ -70,7 +70,7 @@ module "subnets" {
 }
 
 module "alb" {
-  source                  = "../network/alb"
+  source                  = "../../vpc/network/alb"
   enable                  = "${var.alb_enable}"
   name                    = "${var.name}"
   vpc_id                  = "${var.vpc_id}"
