@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-cd ~root/docker-kubernetes-node && ./fan-setup.sh
+cd ~root/docker-kubernetes-node && ./docker-setup.sh
 
 until docker info; do echo Waiting for Docker to start...; sleep 3; done;
 until curl http://kmaster.local:8080/healthz; do echo Waiting for kmaster to come online...; sleep 10; done;
