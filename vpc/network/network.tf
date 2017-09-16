@@ -54,6 +54,42 @@ resource "aws_route53_zone" "public" {
   name  = "${var.public_domain}"
 }
 
+resource "aws_security_group" "sg" {
+  name   = "${var.name}-sg"
+  vpc_id = "${var.vpc_id}"
+
+  ingress {
+    protocol    = -1
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["${var.vpc_cidr}"]
+  }
+
+  ingress {
+    protocol  = "tcp"
+    from_port = 22
+    to_port   = 22
+
+    #todo
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    protocol    = -1
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags {
+    Name = "${var.name}-sg"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 # Output
 
 output "public_subnet_ids" {
@@ -70,4 +106,8 @@ output "route53_private_id" {
 
 output "route53_public_id" {
   value = "${aws_route53_zone.public.id}"
+}
+
+output "security_group_id" {
+  value = "${aws_security_group.sg.id}"
 }
