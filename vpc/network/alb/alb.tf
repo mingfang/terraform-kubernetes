@@ -44,7 +44,7 @@ variable "dns_names_public" {
 # Resources
 
 resource "aws_alb" "alb" {
-  count    = "${var.enable}"
+  count    = "${var.enable ? 1 : 0}"
   name     = "${var.name}-alb"
   internal = "${var.internal}"
 
@@ -91,7 +91,7 @@ resource "aws_alb_target_group" "atg" {
 }
 
 resource "aws_security_group" "sg" {
-  count  = "${var.enable}"
+  count  = "${var.enable ? 1 : 0}"
   name   = "${var.name}-alb-sg"
   vpc_id = "${var.vpc_id}"
 
@@ -127,8 +127,8 @@ resource "aws_security_group_rule" "rules" {
   ]
 }
 
-resource "aws_route53_record" "alb" {
-  count   = "${var.enable}"
+resource "aws_route53_record" "private" {
+  count   = "${var.enable ? 1 : 0}"
   zone_id = "${var.route53_zone_id_private}"
   name    = "${var.dns_name_private}"
   type    = "A"
@@ -142,8 +142,8 @@ resource "aws_route53_record" "alb" {
 
 resource "aws_route53_record" "public" {
   count   = "${var.enable ? length(var.dns_names_public) : 0}"
-  zone_id = "${var.route53_zone_id_public}"
   name    = "${element(var.dns_names_public, count.index)}"
+  zone_id = "${var.route53_zone_id_public}"
   type    = "A"
 
   alias {
