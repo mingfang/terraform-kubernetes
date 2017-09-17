@@ -58,10 +58,15 @@ variable "alb_subnet_ids" {
   default = []
 }
 
+variable "security_group_id" {}
+
+variable "image_id" {}
+
 # Resources
 
 module "subnets" {
   source          = "../../vpc/network/private_subnet"
+  enable          = "${var.size > 0}"
   name            = "${var.name}-com"
   cidrs           = "${var.subnets}"
   vpc_id          = "${var.vpc_id}"
@@ -85,16 +90,6 @@ module "alb" {
   route53_zone_id_public  = "${var.alb_route53_zone_id_public}"
 }
 
-data "aws_ami" "kubernetes" {
-  most_recent = true
-  owners      = ["self"]
-
-  filter {
-    name   = "name"
-    values = ["kubernetes"]
-  }
-}
-
 data "template_file" "start" {
   template = "${file("${path.module}/start.sh")}"
 
@@ -104,14 +99,14 @@ data "template_file" "start" {
 }
 
 resource "aws_launch_configuration" "lc" {
+  count                       = "${var.size > 0 ? 1: 0}"
   name_prefix                 = "${var.name}"
   instance_type               = "${var.instance_type}"
-  image_id                    = "${data.aws_ami.kubernetes.id}"
+  image_id                    = "${var.image_id}"
   key_name                    = "${var.key_name}"
-  security_groups             = ["${aws_security_group.sg.id}"]
+  security_groups             = ["${var.security_group_id}"]
   associate_public_ip_address = false
-
-  user_data = "${data.template_file.start.rendered}"
+  user_data                   = "${data.template_file.start.rendered}"
 
   lifecycle {
     create_before_destroy = true
@@ -119,6 +114,7 @@ resource "aws_launch_configuration" "lc" {
 }
 
 resource "aws_autoscaling_group" "asg" {
+  count                = "${var.size > 0 ? 1: 0}"
   name_prefix          = "${var.name}-asg"
   desired_capacity     = "${var.size}"
   min_size             = "${var.size}"
@@ -131,42 +127,6 @@ resource "aws_autoscaling_group" "asg" {
     key                 = "Name"
     value               = "${var.name}"
     propagate_at_launch = true
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_security_group" "sg" {
-  name   = "${var.name}-sg"
-  vpc_id = "${var.vpc_id}"
-
-  ingress {
-    protocol    = -1
-    from_port   = 0
-    to_port     = 0
-    cidr_blocks = ["${var.vpc_cidr}"]
-  }
-
-  ingress {
-    protocol  = "tcp"
-    from_port = 22
-    to_port   = 22
-
-    #todo
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    protocol    = -1
-    from_port   = 0
-    to_port     = 0
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags {
-    Name = "${var.name}-sg"
   }
 
   lifecycle {
