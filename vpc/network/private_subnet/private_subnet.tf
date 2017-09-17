@@ -13,7 +13,8 @@ variable "azs" {
 }
 
 variable "nat_gateway_ids" {
-  type = "list"
+  type    = "list"
+  default = []
 }
 
 variable "enable" {
@@ -38,7 +39,7 @@ resource "aws_subnet" "subnets" {
 }
 
 resource "aws_route_table" "route_tables" {
-  count  = "${var.enable ? length(var.cidrs) : 0}"
+  count  = "${var.enable ? length(var.nat_gateway_ids) : 0}"
   vpc_id = "${var.vpc_id}"
 
   route {
@@ -56,7 +57,7 @@ resource "aws_route_table" "route_tables" {
 }
 
 resource "aws_route_table_association" "route_association" {
-  count          = "${var.enable ? length(var.cidrs) : 0}"
+  count          = "${var.enable ? length(var.nat_gateway_ids) : 0}"
   subnet_id      = "${element(aws_subnet.subnets.*.id, count.index)}"
   route_table_id = "${element(aws_route_table.route_tables.*.id, count.index)}"
 
