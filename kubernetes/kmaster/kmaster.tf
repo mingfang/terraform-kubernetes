@@ -24,6 +24,12 @@ variable "instance_type" {
   default = "t2.micro"
 }
 
+variable "image_id" {}
+
+variable "efs_dns_name" {
+  default = ""
+}
+
 variable "alb_route53_zone_id_private" {
   default = ""
 }
@@ -36,6 +42,7 @@ variable "alb_subnet_ids" {
   type    = "list"
   default = []
 }
+
 
 # Resources
 
@@ -63,30 +70,22 @@ module "alb" {
   route53_zone_id_public  = "${var.alb_route53_zone_id_public}"
 }
 
-data "aws_ami" "kubernetes" {
-  most_recent = true
-  owners      = ["self"]
+data "template_file" "start" {
+  template = "${file("${path.module}/start.sh")}"
 
-  filter {
-    name   = "name"
-    values = ["kubernetes"]
+  vars {
+    efs_dns_name = "${var.efs_dns_name}"
   }
 }
 
 resource "aws_launch_configuration" "lc" {
-  name                        = "${var.name}"
+  name_prefix                 = "${var.name}"
   instance_type               = "${var.instance_type}"
-  image_id                    = "${data.aws_ami.kubernetes.id}"
+  image_id                    = "${var.image_id}"
   key_name                    = "${var.key_name}"
   security_groups             = ["${aws_security_group.sg.id}"]
   associate_public_ip_address = false
-
-  user_data = <<EOF
-  #cloud-config
-  runcmd:
-    - cd ~root/docker-kubernetes-master && ./run
-    - echo $'alias kubectl=\'docker run -v $PWD:/docker -w /docker --rm -it kubernetes-master kubectl --server="http://$HOSTNAME:8080"\'' >> ~root/.profile
-  EOF
+  user_data                   = "${data.template_file.start.rendered}"
 
   lifecycle {
     create_before_destroy = true
@@ -106,10 +105,6 @@ resource "aws_autoscaling_group" "asg" {
     key                 = "Name"
     value               = "${var.name}"
     propagate_at_launch = true
-  }
-
-  lifecycle {
-    create_before_destroy = true
   }
 }
 
@@ -156,10 +151,6 @@ resource "aws_security_group" "sg" {
 
   tags {
     Name = "${var.name}-sg"
-  }
-
-  lifecycle {
-    create_before_destroy = true
   }
 }
 
