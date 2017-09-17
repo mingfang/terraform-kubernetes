@@ -60,6 +60,10 @@ variable kmaster_instance_type {
   default = "t2.micro"
 }
 
+variable bastion_instance_type {
+  default = "t2.micro"
+}
+
 variable "vpc_cidr" {
   default = "10.248.0.0/16"
 }
@@ -92,6 +96,11 @@ variable "admin_subnets" {
 variable "db_subnets" {
   type    = "list"
   default = ["10.248.61.0/24", "10.248.62.0/24", "10.248.63.0/24"]
+}
+
+variable "efs_subnets" {
+  type    = "list"
+  default = ["10.248.71.0/24", "10.248.72.10/24", "10.248.73.0/24"]
 }
 
 variable "kmaster_subnets" {
@@ -134,6 +143,27 @@ module "network" {
   public_subnets = "${var.public_subnets}"
 }
 
+data "aws_ami" "kubernetes" {
+  most_recent = true
+  owners      = ["self"]
+
+  filter {
+    name   = "name"
+    values = ["kubernetes"]
+  }
+}
+
+module "bastion" {
+  source        = "../vpc/bastion"
+  name          = "${var.name}-bastion"
+  instance_type = "${var.bastion_instance_type}"
+  image_id      = "${data.aws_ami.kubernetes.id}"
+  key_name      = "${aws_key_pair.cluster_key_pair.key_name}"
+  vpc_id        = "${module.vpc.id}"
+  vpc_cidr      = "${var.vpc_cidr}"
+  subnet_id     = "${element(module.network.public_subnet_ids, 0)}"
+}
+
 module "kmaster" {
   source                      = "./kmaster"
   name                        = "${var.name}-kmaster"
@@ -147,64 +177,74 @@ module "kmaster" {
   alb_route53_zone_id_private = "${module.network.route53_private_id}"
   alb_route53_zone_id_public  = "${module.network.route53_public_id}"
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
+  image_id                    = "${data.aws_ami.kubernetes.id}"
+  efs_dns_name                = "${var.name}-data.local"
 }
 
 module "green_zone" {
-  source        = "./knode"
-  name          = "${var.name}-knodes-green"
-  zone          = "green"
-  size          = "${var.green_size}"
-  instance_type = "${var.green_instance_type}"
-  vpc_id        = "${module.vpc.id}"
-  vpc_cidr      = "${var.vpc_cidr}"
-  azs           = "${var.azs}"
-  nat_ids       = "${module.network.nat_gateway_ids}"
-  subnets       = "${var.green_subnets}"
-  key_name      = "${aws_key_pair.cluster_key_pair.key_name}"
+  source            = "./knode"
+  name              = "${var.name}-knodes-green"
+  zone              = "green"
+  size              = "${var.green_size}"
+  instance_type     = "${var.green_instance_type}"
+  vpc_id            = "${module.vpc.id}"
+  vpc_cidr          = "${var.vpc_cidr}"
+  azs               = "${var.azs}"
+  nat_ids           = "${module.network.nat_gateway_ids}"
+  subnets           = "${var.green_subnets}"
+  key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
+  security_group_id = "${module.network.security_group_id}"
+  image_id          = "${data.aws_ami.kubernetes.id}"
 }
 
 module "net_zone" {
-  source        = "./knode"
-  name          = "${var.name}-knodes-net"
-  zone          = "net"
-  size          = "${var.net_size}"
-  instance_type = "${var.net_instance_type}"
-  subnets       = "${var.net_subnets}"
-  vpc_id        = "${module.vpc.id}"
-  vpc_cidr      = "${var.vpc_cidr}"
-  azs           = "${var.azs}"
-  nat_ids       = "${module.network.nat_gateway_ids}"
-  key_name      = "${aws_key_pair.cluster_key_pair.key_name}"
+  source            = "./knode"
+  name              = "${var.name}-knodes-net"
+  zone              = "net"
+  size              = "${var.net_size}"
+  instance_type     = "${var.net_instance_type}"
+  subnets           = "${var.net_subnets}"
+  vpc_id            = "${module.vpc.id}"
+  vpc_cidr          = "${var.vpc_cidr}"
+  azs               = "${var.azs}"
+  nat_ids           = "${module.network.nat_gateway_ids}"
+  key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
+  security_group_id = "${module.network.security_group_id}"
+  image_id          = "${data.aws_ami.kubernetes.id}"
 }
 
 module "db_zone" {
-  source        = "./knode"
-  name          = "${var.name}-knodes-db"
-  zone          = "db"
-  size          = "${var.db_size}"
-  instance_type = "${var.db_instance_type}"
-  subnets       = "${var.db_subnets}"
-  vpc_id        = "${module.vpc.id}"
-  vpc_cidr      = "${var.vpc_cidr}"
-  azs           = "${var.azs}"
-  nat_ids       = "${module.network.nat_gateway_ids}"
-  key_name      = "${aws_key_pair.cluster_key_pair.key_name}"
+  source            = "./knode"
+  name              = "${var.name}-knodes-db"
+  zone              = "db"
+  size              = "${var.db_size}"
+  instance_type     = "${var.db_instance_type}"
+  subnets           = "${var.db_subnets}"
+  vpc_id            = "${module.vpc.id}"
+  vpc_cidr          = "${var.vpc_cidr}"
+  azs               = "${var.azs}"
+  nat_ids           = "${module.network.nat_gateway_ids}"
+  key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
+  security_group_id = "${module.network.security_group_id}"
+  image_id          = "${data.aws_ami.kubernetes.id}"
 }
 
 module "admin_zone" {
-  source        = "./knode"
-  name          = "${var.name}-knodes-admin"
-  zone          = "admin"
-  size          = "${var.admin_size}"
-  instance_type = "${var.admin_instance_type}"
-  subnets       = "${var.admin_subnets}"
-  vpc_id        = "${module.vpc.id}"
-  vpc_cidr      = "${var.vpc_cidr}"
-  azs           = "${var.azs}"
-  nat_ids       = "${module.network.nat_gateway_ids}"
-  key_name      = "${aws_key_pair.cluster_key_pair.key_name}"
+  source            = "./knode"
+  name              = "${var.name}-knodes-admin"
+  zone              = "admin"
+  size              = "${var.admin_size}"
+  instance_type     = "${var.admin_instance_type}"
+  subnets           = "${var.admin_subnets}"
+  vpc_id            = "${module.vpc.id}"
+  vpc_cidr          = "${var.vpc_cidr}"
+  azs               = "${var.azs}"
+  nat_ids           = "${module.network.nat_gateway_ids}"
+  key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
+  security_group_id = "${module.network.security_group_id}"
+  image_id          = "${data.aws_ami.kubernetes.id}"
 
-  alb_enable                  = true
+  alb_enable                  = "${var.admin_size > 0}"
   alb_internal                = false
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
   alb_dns_name_private        = "admin"
@@ -214,22 +254,35 @@ module "admin_zone" {
 }
 
 module "com_zone" {
-  source   = "./knode"
-  name     = "${var.name}-knodes-com"
-  zone     = "com"
-  size     = "${var.com_size}"
-  subnets  = "${var.com_subnets}"
-  vpc_id   = "${module.vpc.id}"
-  vpc_cidr = "${var.vpc_cidr}"
-  azs      = "${var.azs}"
-  nat_ids  = "${module.network.nat_gateway_ids}"
-  key_name = "${aws_key_pair.cluster_key_pair.key_name}"
+  source            = "./knode"
+  name              = "${var.name}-knodes-com"
+  zone              = "com"
+  size              = "${var.com_size}"
+  subnets           = "${var.com_subnets}"
+  vpc_id            = "${module.vpc.id}"
+  vpc_cidr          = "${var.vpc_cidr}"
+  azs               = "${var.azs}"
+  nat_ids           = "${module.network.nat_gateway_ids}"
+  key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
+  security_group_id = "${module.network.security_group_id}"
+  image_id          = "${data.aws_ami.kubernetes.id}"
 
-  alb_enable                  = true
+  alb_enable                  = "${var.com_size > 0}"
   alb_internal                = false
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
   alb_dns_name_private        = "com"
   alb_route53_zone_id_private = "${module.network.route53_private_id}"
+}
+
+module "efs" {
+  source             = "../vpc/network/efs"
+  name               = "${var.name}-data"
+  vpc_id             = "${module.vpc.id}"
+  region             = "${var.region}"
+  azs                = "${var.azs}"
+  route53_zone_id    = "${module.network.route53_private_id}"
+  security_group_ids = ["${module.network.security_group_id}", "${module.kmaster.security_group_id}"]
+  subnets            = "${var.efs_subnets}"
 }
 
 resource "aws_network_acl" "acl" {
@@ -290,4 +343,8 @@ output "vpc_id" {
 
 output "vpc_cidr" {
   value = "${module.vpc.cidr}"
+}
+
+output "efs_dns_name" {
+  value = "${module.efs.efs_id}.efs.${var.region}.amazonaws.com"
 }

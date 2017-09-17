@@ -43,7 +43,6 @@ variable "alb_subnet_ids" {
   default = []
 }
 
-
 # Resources
 
 module "subnets" {
@@ -112,6 +111,7 @@ resource "aws_security_group" "sg" {
   name   = "${var.name}-sg"
   vpc_id = "${var.vpc_id}"
 
+  //KMASTER
   ingress {
     protocol    = "tcp"
     from_port   = 8080
@@ -119,6 +119,7 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["${var.vpc_cidr}"]
   }
 
+  //ETCD
   ingress {
     protocol    = "tcp"
     from_port   = 4001
@@ -126,6 +127,7 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["${var.vpc_cidr}"]
   }
 
+  //KMASTER
   ingress {
     protocol    = "tcp"
     from_port   = 443
@@ -133,6 +135,7 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["${var.vpc_cidr}"]
   }
 
+  //SSH
   ingress {
     protocol  = "tcp"
     from_port = 22
@@ -140,6 +143,14 @@ resource "aws_security_group" "sg" {
 
     #todo
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  //EFS
+  egress {
+    protocol    = "tcp"
+    from_port   = 2049
+    to_port     = 2049
+    cidr_blocks = ["${var.vpc_cidr}"]
   }
 
   egress {
@@ -158,4 +169,8 @@ resource "aws_security_group" "sg" {
 
 output "subnet_ids" {
   value = "${module.subnets.ids}"
+}
+
+output "security_group_id" {
+  value = "${aws_security_group.sg.id}"
 }
