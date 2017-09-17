@@ -100,7 +100,7 @@ variable "db_subnets" {
 
 variable "efs_subnets" {
   type    = "list"
-  default = ["10.248.71.0/24", "10.248.72.10/24", "10.248.73.0/24"]
+  default = ["10.248.71.0/24", "10.248.72.0/24", "10.248.73.0/24"]
 }
 
 variable "kmaster_subnets" {
