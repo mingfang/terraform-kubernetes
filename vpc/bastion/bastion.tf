@@ -1,36 +1,38 @@
 # Variables
 
-variable "name" {
-  default = "bastion"
-}
+variable "name" {}
 
 variable "vpc_id" {}
 
 variable "vpc_cidr" {}
 
-variable "region" {}
-
-variable "public_subnet_ids" {
-  type = "list"
-}
-
 variable "key_name" {}
 
-variable "instance_type" {}
+variable "subnet_id" {}
+
+variable "instance_type" {
+  default = "t2.micro"
+}
+
+variable "image_id" {}
+
+variable "alb_route53_zone_id_private" {
+  default = ""
+}
+
+variable "alb_route53_zone_id_public" {
+  default = ""
+}
 
 # Resources
 
-resource "aws_security_group" "bastion" {
-  name        = "${var.name}-sg"
-  vpc_id      = "${var.vpc_id}"
-  description = "Bastion security group"
+data "template_file" "start" {
+  template = "${file("${path.module}/start.sh")}"
+}
 
-  ingress {
-    protocol    = -1
-    from_port   = 0
-    to_port     = 0
-    cidr_blocks = ["${var.vpc_cidr}"]
-  }
+resource "aws_security_group" "bastion" {
+  name   = "${var.name}-sg"
+  vpc_id = "${var.vpc_id}"
 
   ingress {
     protocol    = "tcp"
@@ -43,7 +45,7 @@ resource "aws_security_group" "bastion" {
     protocol    = -1
     from_port   = 0
     to_port     = 0
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["${var.vpc_cidr}"]
   }
 
   tags {
@@ -55,17 +57,10 @@ resource "aws_security_group" "bastion" {
   }
 }
 
-module "ami" {
-  source        = "github.com/terraform-community-modules/tf_aws_ubuntu_ami/ebs"
-  instance_type = "${var.instance_type}"
-  region        = "${var.region}"
-  distribution  = "trusty"
-}
-
 resource "aws_instance" "bastion" {
-  ami                         = "${module.ami.ami_id}"
+  ami                         = "${var.image_id}"
   instance_type               = "${var.instance_type}"
-  subnet_id                   = "${element(var.public_subnet_ids, count.index)}"
+  subnet_id                   = "${var.subnet_id}"
   key_name                    = "${var.key_name}"
   vpc_security_group_ids      = ["${aws_security_group.bastion.id}"]
   associate_public_ip_address = true
@@ -79,10 +74,5 @@ resource "aws_instance" "bastion" {
   }
 }
 
-output "private_ip" {
-  value = "${aws_instance.bastion.private_ip}"
-}
+# Outputs
 
-output "public_ip" {
-  value = "${aws_instance.bastion.public_ip}"
-}
