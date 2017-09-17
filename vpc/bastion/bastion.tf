@@ -40,18 +40,15 @@ resource "aws_security_group" "bastion" {
     to_port     = 22
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   egress {
     protocol    = -1
     from_port   = 0
     to_port     = 0
     cidr_blocks = ["${var.vpc_cidr}"]
   }
-
   tags {
     Name = "${var.name}"
   }
-
   lifecycle {
     create_before_destroy = true
   }
