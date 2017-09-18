@@ -178,7 +178,7 @@ module "kmaster" {
   alb_route53_zone_id_public  = "${module.network.route53_public_id}"
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
   image_id                    = "${data.aws_ami.kubernetes.id}"
-  efs_dns_name                = "${var.name}-data.local"
+  efs_dns_name                = "cluster-data.local"
 }
 
 module "green_zone" {
@@ -276,13 +276,13 @@ module "com_zone" {
 
 module "efs" {
   source             = "../vpc/network/efs"
-  name               = "${var.name}-data"
+  name               = "cluster-data"
   vpc_id             = "${module.vpc.id}"
   region             = "${var.region}"
   azs                = "${var.azs}"
-  route53_zone_id    = "${module.network.route53_private_id}"
-  security_group_ids = ["${module.network.security_group_id}", "${module.kmaster.security_group_id}"]
   subnets            = "${var.efs_subnets}"
+  security_group_ids = ["${module.network.security_group_id}", "${module.kmaster.security_group_id}"]
+  route53_zone_id    = "${module.network.route53_private_id}"
 }
 
 resource "aws_network_acl" "acl" {
