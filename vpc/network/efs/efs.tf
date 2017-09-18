@@ -70,7 +70,7 @@ resource "aws_security_group" "efs_sg" {
 }
 
 resource "aws_efs_mount_target" "target" {
-  count           = "${length(var.subnets)}"
+  count           = "${length(var.azs)}"
   subnet_id       = "${element(module.subnets.ids, count.index)}"
   file_system_id  = "${aws_efs_file_system.efs.id}"
   security_groups = ["${aws_security_group.efs_sg.id}"]
