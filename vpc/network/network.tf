@@ -45,7 +45,7 @@ module "public_subnets" {
 }
 
 resource "aws_route53_zone" "private" {
-  name   = "local"
+  name   = "${var.name}.local"
   vpc_id = "${var.vpc_id}"
 }
 
