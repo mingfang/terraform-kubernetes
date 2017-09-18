@@ -23,12 +23,12 @@ variable "subnets" {
 # Resources
 
 module "subnets" {
-  source = "../private_subnet"
-  name   = "${var.name}-efs"
-  cidrs  = "${var.subnets}"
-  vpc_id = "${var.vpc_id}"
-  azs    = "${var.azs}"
-  nat_support = false
+  source          = "../private_subnet"
+  name            = "${var.name}-efs"
+  cidrs           = "${var.subnets}"
+  vpc_id          = "${var.vpc_id}"
+  azs             = "${var.azs}"
+  nat_support     = false
   nat_gateway_ids = []
 }
 

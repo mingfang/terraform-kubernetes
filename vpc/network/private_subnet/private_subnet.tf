@@ -13,7 +13,7 @@ variable "azs" {
 }
 
 variable "nat_gateway_ids" {
-  type    = "list"
+  type = "list"
 }
 
 variable "nat_support" {
