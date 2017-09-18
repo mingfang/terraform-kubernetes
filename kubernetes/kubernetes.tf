@@ -258,6 +258,7 @@ module "com_zone" {
   name              = "${var.name}-knodes-com"
   zone              = "com"
   size              = "${var.com_size}"
+  instance_type     = "${var.com_instance_type}"
   subnets           = "${var.com_subnets}"
   vpc_id            = "${module.vpc.id}"
   vpc_cidr          = "${var.vpc_cidr}"

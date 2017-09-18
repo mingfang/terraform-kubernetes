@@ -20,9 +20,7 @@ variable "nat_ids" {
   type = "list"
 }
 
-variable "instance_type" {
-  default = "t2.micro"
-}
+variable "instance_type" {}
 
 variable "image_id" {}
 

@@ -20,9 +20,7 @@ variable "nat_ids" {
   type = "list"
 }
 
-variable "instance_type" {
-  default = "t2.micro"
-}
+variable "instance_type" {}
 
 variable "zone" {}
 
@@ -67,7 +65,7 @@ variable "image_id" {}
 module "subnets" {
   source          = "../../vpc/network/private_subnet"
   enable          = "${var.size > 0}"
-  name            = "${var.name}-com"
+  name            = "${var.name}"
   cidrs           = "${var.subnets}"
   vpc_id          = "${var.vpc_id}"
   azs             = "${var.azs}"
@@ -115,7 +113,7 @@ resource "aws_launch_configuration" "lc" {
 
 resource "aws_autoscaling_group" "asg" {
   count                = "${var.size > 0 ? 1: 0}"
-  name_prefix          = "${var.name}-asg"
+  name_prefix          = "${var.name}"
   desired_capacity     = "${var.size}"
   min_size             = "${var.size}"
   max_size             = "${var.size}"
