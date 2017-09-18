@@ -8,7 +8,7 @@ mkdir -p /mnt/data
 
 if [ $EFS_DNS_NAME ]; then
     until nslookup $EFS_DNS_NAME; do
-        echo "waiting for $EFS_DNS_NAME"
+        echo "Waiting for EFS $EFS_DNS_NAME..."
         sleep 3
     done
 
