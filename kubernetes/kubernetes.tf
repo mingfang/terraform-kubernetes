@@ -273,6 +273,8 @@ module "com_zone" {
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
   alb_dns_name_private        = "com"
   alb_route53_zone_id_private = "${module.network.route53_private_id}"
+  alb_dns_names_public        = ["*.${var.public_domain}"]
+  alb_route53_zone_id_public  = "${module.network.route53_public_id}"
 }
 
 module "efs" {
