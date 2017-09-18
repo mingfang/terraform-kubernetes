@@ -27,7 +27,7 @@ variable "enable" {
 # Resources
 
 resource "aws_subnet" "subnets" {
-  count             = "${var.enable ? length(var.cidrs) : 0}"
+  count             = "${var.enable ? length(var.azs) : 0}"
   vpc_id            = "${var.vpc_id}"
   cidr_block        = "${element(var.cidrs, count.index)}"
   availability_zone = "${element(var.azs, count.index)}"
@@ -42,7 +42,7 @@ resource "aws_subnet" "subnets" {
 }
 
 resource "aws_route_table" "route_tables" {
-  count  = "${var.enable && var.nat_support ? length(var.cidrs) : 0}"
+  count  = "${var.enable && var.nat_support ? length(var.azs) : 0}"
   vpc_id = "${var.vpc_id}"
 
   route {
@@ -60,7 +60,7 @@ resource "aws_route_table" "route_tables" {
 }
 
 resource "aws_route_table_association" "route_association" {
-  count          = "${var.enable && var.nat_support ? length(var.cidrs) : 0}"
+  count          = "${var.enable && var.nat_support ? length(var.azs) : 0}"
   subnet_id      = "${element(aws_subnet.subnets.*.id, count.index)}"
   route_table_id = "${element(aws_route_table.route_tables.*.id, count.index)}"
 
