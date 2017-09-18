@@ -2,8 +2,6 @@
 
 variable "name" {}
 
-variable "route53_zone_id" {}
-
 variable "region" {}
 
 variable "vpc_id" {}
@@ -20,11 +18,15 @@ variable "subnets" {
   type = "list"
 }
 
+variable "dns_name" {}
+
+variable "route53_zone_id" {}
+
 # Resources
 
 module "subnets" {
   source          = "../private_subnet"
-  name            = "${var.name}-efs"
+  name            = "${var.name}"
   cidrs           = "${var.subnets}"
   vpc_id          = "${var.vpc_id}"
   azs             = "${var.azs}"
@@ -45,7 +47,7 @@ resource "aws_efs_file_system" "efs" {
 }
 
 resource "aws_security_group" "efs_sg" {
-  name   = "${var.name}-efs-sg"
+  name   = "${var.name}"
   vpc_id = "${var.vpc_id}"
 
   ingress {
@@ -63,7 +65,7 @@ resource "aws_security_group" "efs_sg" {
   }
 
   tags {
-    Name = "${var.name}-efs-sg"
+    Name = "${var.name}"
   }
 }
 
@@ -75,7 +77,7 @@ resource "aws_efs_mount_target" "target" {
 }
 
 resource "aws_route53_record" "efs" {
-  name    = "${var.name}"
+  name    = "${var.dns_name}"
   zone_id = "${var.route53_zone_id}"
   type    = "CNAME"
   ttl     = "300"
@@ -86,4 +88,8 @@ resource "aws_route53_record" "efs" {
 
 output "efs_id" {
   value = "${aws_efs_file_system.efs.id}"
+}
+
+output "fqdn" {
+  value = "${aws_route53_record.efs.fqdn}"
 }
