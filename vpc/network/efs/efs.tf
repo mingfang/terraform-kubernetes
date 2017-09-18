@@ -28,6 +28,8 @@ module "subnets" {
   cidrs  = "${var.subnets}"
   vpc_id = "${var.vpc_id}"
   azs    = "${var.azs}"
+  nat_support = false
+  nat_gateway_ids = []
 }
 
 resource "aws_efs_file_system" "efs" {
