@@ -47,7 +47,7 @@ variable "alb_subnet_ids" {
 
 module "subnets" {
   source          = "../../vpc/network/private_subnet"
-  name            = "${var.name}-kmaster"
+  name            = "${var.name}"
   cidrs           = "${var.subnets}"
   vpc_id          = "${var.vpc_id}"
   azs             = "${var.azs}"
@@ -92,7 +92,7 @@ resource "aws_launch_configuration" "lc" {
 }
 
 resource "aws_autoscaling_group" "asg" {
-  name                 = "${var.name}-asg"
+  name                 = "${var.name}"
   desired_capacity     = 1
   min_size             = 1
   max_size             = 1
@@ -108,7 +108,7 @@ resource "aws_autoscaling_group" "asg" {
 }
 
 resource "aws_security_group" "sg" {
-  name   = "${var.name}-sg"
+  name   = "${var.name}"
   vpc_id = "${var.vpc_id}"
 
   //KMASTER
@@ -161,7 +161,7 @@ resource "aws_security_group" "sg" {
   }
 
   tags {
-    Name = "${var.name}-sg"
+    Name = "${var.name}"
   }
 }
 
