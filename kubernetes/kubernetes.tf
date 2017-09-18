@@ -195,6 +195,7 @@ module "green_zone" {
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
+  kmaster           = "${module.kmaster.fqdn}"
 }
 
 module "net_zone" {
@@ -211,6 +212,7 @@ module "net_zone" {
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
+  kmaster           = "${module.kmaster.fqdn}"
 }
 
 module "db_zone" {
@@ -227,6 +229,7 @@ module "db_zone" {
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
+  kmaster           = "${module.kmaster.fqdn}"
 }
 
 module "admin_zone" {
@@ -243,6 +246,7 @@ module "admin_zone" {
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
+  kmaster           = "${module.kmaster.fqdn}"
 
   alb_enable                  = "${var.admin_size > 0}"
   alb_internal                = false
@@ -267,6 +271,7 @@ module "com_zone" {
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
+  kmaster           = "${module.kmaster.fqdn}"
 
   alb_enable                  = "${var.com_size > 0}"
   alb_internal                = false

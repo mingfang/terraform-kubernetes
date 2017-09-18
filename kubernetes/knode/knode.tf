@@ -60,6 +60,8 @@ variable "security_group_id" {}
 
 variable "image_id" {}
 
+variable "kmaster" {}
+
 # Resources
 
 module "subnets" {
@@ -92,7 +94,8 @@ data "template_file" "start" {
   template = "${file("${path.module}/start.sh")}"
 
   vars {
-    zone = "${var.zone}"
+    zone    = "${var.zone}"
+    kmaster = "${var.kmaster}"
   }
 }
 

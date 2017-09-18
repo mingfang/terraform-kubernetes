@@ -2,6 +2,8 @@
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
+export KMASTER="${kmaster}"
+
 cd ~root/docker-kubernetes-node && ./docker-setup.sh
 
 until docker info; do
@@ -9,7 +11,7 @@ until docker info; do
     sleep 3
 done
 
-until curl http://kmaster.local:8080/healthz; do
+until curl http://$KMASTER:8080/healthz; do
     echo "Waiting for kmaster to come online..."
     sleep 3;
 done
@@ -21,5 +23,5 @@ export LABELS="zone=${zone},aws.az=$AZ,aws.instance-type=$INSTANCE_TYPE,aws.ami-
 echo "LABELS=$LABELS"
 
 cd ~root/docker-kubernetes-node
-./run kmaster.local
+./run $KMASTER
 docker ps
