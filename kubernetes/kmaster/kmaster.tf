@@ -84,6 +84,12 @@ resource "aws_launch_configuration" "lc" {
   associate_public_ip_address = false
   user_data                   = "${data.template_file.start.rendered}"
 
+  root_block_device {
+    volume_size           = "8"
+    volume_type           = "gp2"
+    delete_on_termination = "true"
+  }
+
   lifecycle {
     create_before_destroy = true
   }
