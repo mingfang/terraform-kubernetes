@@ -37,27 +37,27 @@ variable "admin_size" {
 }
 
 variable com_instance_type {
-  default = "t2.micro"
+  default = "t2.medium"
 }
 
 variable green_instance_type {
-  default = "t2.micro"
+  default = "t2.medium"
 }
 
 variable net_instance_type {
-  default = "t2.micro"
+  default = "t2.medium"
 }
 
 variable db_instance_type {
-  default = "t2.micro"
+  default = "t2.medium"
 }
 
 variable admin_instance_type {
-  default = "t2.micro"
+  default = "t2.medium"
 }
 
 variable kmaster_instance_type {
-  default = "t2.micro"
+  default = "t2.medium"
 }
 
 variable bastion_instance_type {
