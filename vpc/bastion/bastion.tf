@@ -78,6 +78,7 @@ resource "aws_route53_record" "bastion" {
   name    = "${aws_instance.bastion.public_dns}"
   zone_id = "${var.route53_zone_id}"
   type    = "A"
+  ttl     = "300"
 }
 
 # Outputs
