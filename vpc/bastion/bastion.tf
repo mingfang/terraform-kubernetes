@@ -75,10 +75,11 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_route53_record" "bastion" {
-  name    = "${aws_instance.bastion.public_dns}"
+  name    = "bastion"
   zone_id = "${var.route53_zone_id}"
-  type    = "A"
+  type    = "CNAME"
   ttl     = "300"
+  records = ["${aws_instance.bastion.public_dns}"]
 }
 
 # Outputs
