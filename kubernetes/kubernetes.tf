@@ -154,14 +154,15 @@ data "aws_ami" "kubernetes" {
 }
 
 module "bastion" {
-  source        = "../vpc/bastion"
-  name          = "${var.name}-bastion"
-  instance_type = "${var.bastion_instance_type}"
-  image_id      = "${data.aws_ami.kubernetes.id}"
-  key_name      = "${aws_key_pair.cluster_key_pair.key_name}"
-  vpc_id        = "${module.vpc.id}"
-  vpc_cidr      = "${var.vpc_cidr}"
-  subnet_id     = "${element(module.network.public_subnet_ids, 0)}"
+  source          = "../vpc/bastion"
+  name            = "${var.name}-bastion"
+  instance_type   = "${var.bastion_instance_type}"
+  image_id        = "${data.aws_ami.kubernetes.id}"
+  key_name        = "${aws_key_pair.cluster_key_pair.key_name}"
+  vpc_id          = "${module.vpc.id}"
+  vpc_cidr        = "${var.vpc_cidr}"
+  subnet_id       = "${element(module.network.public_subnet_ids, 0)}"
+  route53_zone_id = "${module.network.route53_public_id}"
 }
 
 module "kmaster" {
@@ -354,6 +355,10 @@ output "vpc_cidr" {
   value = "${module.vpc.cidr}"
 }
 
-output "efs_dns_name" {
+output "efs_fqdn" {
   value = "${module.efs.efs_id}.efs.${var.region}.amazonaws.com"
+}
+
+output "bastion_fqdn" {
+  value = "${module.bastion.fqdn}"
 }

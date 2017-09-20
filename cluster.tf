@@ -39,3 +39,7 @@ module "cluster" {
   admin_size          = 0
   admin_instance_type = "t2.medium"
 }
+
+output "bastion_fqdn" {
+  value = "${module.cluster.bastion_fqdn}"
+}

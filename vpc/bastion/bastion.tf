@@ -16,13 +16,7 @@ variable "instance_type" {
 
 variable "image_id" {}
 
-variable "alb_route53_zone_id_private" {
-  default = ""
-}
-
-variable "alb_route53_zone_id_public" {
-  default = ""
-}
+variable "route53_zone_id" {}
 
 # Resources
 
@@ -80,5 +74,14 @@ resource "aws_instance" "bastion" {
   }
 }
 
+resource "aws_route53_record" "bastion" {
+  name    = "${aws_instance.bastion.public_dns}"
+  zone_id = "${var.route53_zone_id}"
+  type    = "A"
+}
+
 # Outputs
 
+output "fqdn" {
+  value = "${aws_route53_record.bastion.fqdn}"
+}
