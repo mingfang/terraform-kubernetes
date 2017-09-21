@@ -100,6 +100,7 @@ resource "aws_autoscaling_group" "asg" {
   desired_capacity     = 1
   min_size             = 1
   max_size             = 1
+  default_cooldown     = 60
   launch_configuration = "${aws_launch_configuration.lc.name}"
   vpc_zone_identifier  = ["${module.subnets.ids}"]
   target_group_arns    = ["${module.alb.target_group_arns}"]
