@@ -1,6 +1,7 @@
 .idea
 .terraform
 *.pem
+*.pub
 *.tfvars
 *.tfstate
 *.tfstate.backup
