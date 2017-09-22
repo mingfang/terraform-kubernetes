@@ -25,7 +25,7 @@ variable "route53_zone_id" {}
 # Resources
 
 module "subnets" {
-  source          = "../private_subnet"
+  source          = "../network/private_subnet"
   name            = "${var.name}"
   cidrs           = "${var.subnets}"
   vpc_id          = "${var.vpc_id}"

@@ -284,7 +284,7 @@ module "com_zone" {
 }
 
 module "efs" {
-  source             = "../vpc/network/efs"
+  source             = "../vpc/efs"
   name               = "${var.name}-efs"
   vpc_id             = "${module.vpc.id}"
   region             = "${var.region}"
