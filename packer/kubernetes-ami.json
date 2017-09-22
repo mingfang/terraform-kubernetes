@@ -1,5 +1,7 @@
 {
   "variables": {
+     "access_key": "",
+     "secret_key": ""
   },
   "builders": [{
     "access_key": "{{user `access_key`}}",
