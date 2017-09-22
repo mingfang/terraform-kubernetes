@@ -3,5 +3,6 @@
 *.pem
 *.pub
 *.tfvars
+*.tfvars.json
 *.tfstate
 *.tfstate.backup
