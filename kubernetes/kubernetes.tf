@@ -362,3 +362,11 @@ output "efs_fqdn" {
 output "bastion_fqdn" {
   value = "${module.bastion.fqdn}"
 }
+
+output "route53_private_id" {
+  value = "${module.network.route53_private_id}"
+}
+
+output "route53_public_id" {
+  value = "${module.network.route53_public_id}"
+}
