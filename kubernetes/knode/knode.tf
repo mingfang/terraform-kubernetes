@@ -75,7 +75,7 @@ module "subnets" {
 }
 
 module "alb" {
-  source                  = "../../vpc/network/alb"
+  source                  = "../../vpc/alb"
   enable                  = "${var.alb_enable}"
   name                    = "${var.name}"
   vpc_id                  = "${var.vpc_id}"

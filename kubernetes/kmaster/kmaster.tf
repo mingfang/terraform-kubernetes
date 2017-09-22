@@ -53,7 +53,7 @@ module "subnets" {
 }
 
 module "alb" {
-  source                  = "../../vpc/network/alb"
+  source                  = "../../vpc/alb"
   name                    = "${var.name}"
   vpc_id                  = "${var.vpc_id}"
   subnet_ids              = ["${var.alb_subnet_ids}"]
