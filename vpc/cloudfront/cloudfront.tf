@@ -2,7 +2,7 @@ variable "domain_name" {}
 
 variable origin_domain_name {}
 
-variable "route53_zone_id" {}
+variable route53_zone_id {}
 
 resource "aws_cloudfront_distribution" web {
   enabled          = true
