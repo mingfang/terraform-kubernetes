@@ -1,51 +1,59 @@
 {
   "variables": {
-     "access_key": "",
-     "secret_key": ""
+    "access_key": "",
+    "secret_key": "",
+    "packer_region": "",
+    "packer_vpc_id": "",
+    "packer_subnet_id": ""
   },
-  "builders": [{
-    "access_key": "{{user `access_key`}}",
-    "secret_key": "{{user `secret_key`}}",
-    "ami_name": "kubernetes",
-    "force_deregister": "true",
-    "force_delete_snapshot": "true",
-    "region": "us-west-2",
-    "vpc_id": "vpc-e7b41880",
-    "subnet_id": "subnet-3413de53",
-    "associate_public_ip_address": "true",
-    "type": "amazon-ebs",
-    "instance_type": "t2.micro",
-    "ssh_username": "ubuntu",
-    "source_ami_filter": {
-      "filters": {
-        "virtualization-type": "hvm",
-        "name": "*ubuntu-xenial-16.04-amd64-server-*",
-        "root-device-type": "ebs"
-      },
-      "owners": ["099720109477"],
-      "most_recent": true
+  "builders": [
+    {
+      "access_key": "{{user `access_key`}}",
+      "secret_key": "{{user `secret_key`}}",
+      "region": "{{user `packer_region`}}",
+      "vpc_id": "{{user `packer_vpc_id`}}",
+      "subnet_id": "{{user `packer_subnet_id`}}",
+      "ami_name": "kubernetes",
+      "force_deregister": "true",
+      "force_delete_snapshot": "true",
+      "associate_public_ip_address": "true",
+      "type": "amazon-ebs",
+      "instance_type": "t2.micro",
+      "ssh_username": "ubuntu",
+      "source_ami_filter": {
+        "filters": {
+          "virtualization-type": "hvm",
+          "name": "*ubuntu-xenial-16.04-amd64-server-*",
+          "root-device-type": "ebs"
+        },
+        "owners": [
+          "099720109477"
+        ],
+        "most_recent": true
+      }
     }
-  }],
+  ],
   "provisioners": [
     {
-    "type": "shell",
-    "execute_command": "sudo {{ .Path }}",
-    "inline": [
-      "sleep 30",
-      "export DEBIAN_FRONTEND=noninteractive",
-      "apt-get install -y apt-transport-https ca-certificates curl software-properties-common",
-      "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -",
-      "add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
-      "apt-get update",
-      "apt-get dist-upgrade -y --auto-remove",
-      "apt-get install -y docker-ce",
-      "apt-get install -y ncdu dnsutils telnet htop sysstat curl jq bridge-utils ntp git nfs-common tree ubuntu-fan",
-      "cd ~root",
-      "git clone --depth 1 https://github.com/mingfang/docker-kubernetes-master.git",
-      "cd docker-kubernetes-master && ./build",
-      "cd ~root",
-      "git clone --depth 1 https://github.com/mingfang/docker-kubernetes-node.git",
-      "cd docker-kubernetes-node && ./build"
-    ]
-  }]
+      "type": "shell",
+      "execute_command": "sudo {{ .Path }}",
+      "inline": [
+        "sleep 30",
+        "export DEBIAN_FRONTEND=noninteractive",
+        "apt-get install -y apt-transport-https ca-certificates curl software-properties-common",
+        "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -",
+        "add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
+        "apt-get update",
+        "apt-get dist-upgrade -y --auto-remove",
+        "apt-get install -y docker-ce",
+        "apt-get install -y ncdu dnsutils telnet htop sysstat curl jq bridge-utils ntp git nfs-common tree ubuntu-fan",
+        "cd ~root",
+        "git clone --depth 1 https://github.com/mingfang/docker-kubernetes-master.git",
+        "cd docker-kubernetes-master && ./build",
+        "cd ~root",
+        "git clone --depth 1 https://github.com/mingfang/docker-kubernetes-node.git",
+        "cd docker-kubernetes-node && ./build"
+      ]
+    }
+  ]
 }
