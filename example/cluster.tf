@@ -1,6 +1,4 @@
-variable "access_key" {}
-
-variable "secret_key" {}
+# Inputs
 
 variable name {
   default = "example"
@@ -22,6 +20,12 @@ variable public_domain {
 variable "public_key_path" {
   default = "key.pub"
 }
+
+variable "access_key" {}
+
+variable "secret_key" {}
+
+# Resources
 
 provider "aws" {
   access_key = "${var.access_key}"
@@ -47,6 +51,12 @@ module "cluster" {
   db_size               = 0
   admin_size            = 2
   admin_instance_type   = "t2.medium"
+}
+
+# Outputs
+
+output "vpc_id" {
+  value = "${module.cluster.vpc_id}"
 }
 
 output "bastion_fqdn" {
