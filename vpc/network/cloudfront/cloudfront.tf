@@ -84,3 +84,7 @@ resource "aws_route53_record" "root" {
     evaluate_target_health = false
   }
 }
+
+output "cloudfront_id" {
+  value = "${aws_cloudfront_distribution.web.id}"
+}
