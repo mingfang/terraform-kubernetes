@@ -61,10 +61,6 @@ resource "aws_alb_listener" "listener" {
     target_group_arn = "${element(aws_alb_target_group.atg.*.id, count.index)}"
     type             = "forward"
   }
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_alb_target_group" "atg" {
