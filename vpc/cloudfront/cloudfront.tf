@@ -4,6 +4,10 @@ variable origin_domain_name {}
 
 variable route53_zone_id {}
 
+variable "certificate_arn" {
+  default = ""
+}
+
 resource "aws_cloudfront_distribution" web {
   enabled          = true
   retain_on_delete = false
@@ -69,7 +73,7 @@ resource "aws_cloudfront_distribution" web {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn = "${var.certificate_arn}"
   }
 }
 
