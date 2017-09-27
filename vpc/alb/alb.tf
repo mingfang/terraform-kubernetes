@@ -77,6 +77,7 @@ resource "aws_alb_target_group" "atg" {
 
   health_check {
     path                = "${lookup(var.listeners[count.index], "health_check")}"
+    protocol            = "${lookup(var.listeners[count.index], "protocol")}"
     interval            = 10
     healthy_threshold   = 2
     unhealthy_threshold = 2
