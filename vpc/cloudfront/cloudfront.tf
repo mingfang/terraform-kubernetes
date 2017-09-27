@@ -73,8 +73,9 @@ resource "aws_cloudfront_distribution" web {
   }
 
   viewer_certificate {
-    acm_certificate_arn = "${var.certificate_arn}"
-    ssl_support_method = "sni-only"
+    acm_certificate_arn      = "${var.certificate_arn}"
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1"
   }
 }
 
