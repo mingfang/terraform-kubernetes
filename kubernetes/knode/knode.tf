@@ -62,6 +62,10 @@ variable "image_id" {}
 
 variable "kmaster" {}
 
+variable "certificate_arn" {
+  default = ""
+}
+
 # Resources
 
 module "subnets" {
@@ -80,14 +84,25 @@ module "alb" {
   name                    = "${var.name}"
   vpc_id                  = "${var.vpc_id}"
   subnet_ids              = ["${var.alb_subnet_ids}"]
-  ports                   = ["80"]
-  protocols               = ["HTTP"]                             //todo need cert for HTTPS
-  health_checks           = ["/lbstatus"]
   internal                = "${var.alb_internal}"
   dns_name_private        = "${var.alb_dns_name_private}"
   route53_zone_id_private = "${var.alb_route53_zone_id_private}"
   dns_names_public        = "${var.alb_dns_names_public}"
   route53_zone_id_public  = "${var.alb_route53_zone_id_public}"
+
+  listeners = [
+    {
+      port         = 80
+      protocol     = "HTTP"
+      health_check = "/lbstatus"
+    },
+    {
+      port            = 443
+      protocol        = "HTTPS"
+      health_check    = "/lbstatus"
+      certificate_arn = "${var.certificate_arn}"
+    },
+  ]
 }
 
 data "template_file" "start" {

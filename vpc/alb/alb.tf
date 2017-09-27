@@ -4,16 +4,9 @@ variable "name" {}
 
 variable "vpc_id" {}
 
-variable "ports" {
-  type = "list"
-}
-
-variable "protocols" {
-  type = "list"
-}
-
-variable "health_checks" {
-  type = "list"
+variable "listeners" {
+  type    = "list"
+  default = []
 }
 
 variable "subnet_ids" {
@@ -58,23 +51,28 @@ resource "aws_alb" "alb" {
 }
 
 resource "aws_alb_listener" "listener" {
-  count             = "${var.enable ? length(var.ports) : 0}"
+  count             = "${var.enable ? length(var.listeners) : 0}"
   load_balancer_arn = "${aws_alb.alb.id}"
-  port              = "${element(var.ports, count.index)}"
-  protocol          = "${element(var.protocols, count.index)}"
+  port              = "${lookup(var.listeners[count.index], "port")}"
+  protocol          = "${lookup(var.listeners[count.index], "protocol")}"
+  certificate_arn   = "${lookup(var.listeners[count.index], "certificate_arn", "")}"
 
   default_action {
     target_group_arn = "${element(aws_alb_target_group.atg.*.id, count.index)}"
     type             = "forward"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_alb_target_group" "atg" {
-  count    = "${var.enable ? length(var.ports) : 0}"
-  name     = "${var.name}-${element(var.ports, count.index)}"
-  vpc_id   = "${var.vpc_id}"
-  port     = "${element(var.ports, count.index)}"
-  protocol = "${element(var.protocols, count.index)}"
+  count       = "${var.enable ? length(var.listeners) : 0}"
+  name_prefix = "${substr("${var.name}-${lookup(var.listeners[count.index], "port")}", 0, 6)}"
+  vpc_id      = "${var.vpc_id}"
+  port        = "${lookup(var.listeners[count.index], "port")}"
+  protocol    = "${lookup(var.listeners[count.index], "protocol")}"
 
   stickiness {
     type            = "lb_cookie"
@@ -82,11 +80,15 @@ resource "aws_alb_target_group" "atg" {
   }
 
   health_check {
-    path                = "${element(var.health_checks, count.index)}"
+    path                = "${lookup(var.listeners[count.index], "health_check")}"
     interval            = 10
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 5
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -115,12 +117,12 @@ resource "aws_security_group" "sg" {
 }
 
 resource "aws_security_group_rule" "rules" {
-  count             = "${var.enable ? length(var.ports) : 0}"
+  count             = "${var.enable ? length(var.listeners) : 0}"
   security_group_id = "${aws_security_group.sg.id}"
   type              = "ingress"
   protocol          = "tcp"
-  from_port         = "${element(var.ports, count.index)}"
-  to_port           = "${element(var.ports, count.index)}"
+  from_port         = "${lookup(var.listeners[count.index], "port")}"
+  to_port           = "${lookup(var.listeners[count.index], "port")}"
 
   cidr_blocks = [
     "0.0.0.0/0",

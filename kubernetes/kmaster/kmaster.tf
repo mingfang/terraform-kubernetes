@@ -41,6 +41,8 @@ variable "alb_subnet_ids" {
   default = []
 }
 
+variable "certificate_arn" {}
+
 # Resources
 
 module "subnets" {
@@ -57,14 +59,30 @@ module "alb" {
   name                    = "${var.name}"
   vpc_id                  = "${var.vpc_id}"
   subnet_ids              = ["${var.alb_subnet_ids}"]
-  ports                   = ["8080", "4001"]
-  protocols               = ["HTTP", "HTTP"]
-  health_checks           = ["/healthz", "/health"]
   internal                = false                                //todo, should be true
   dns_name_private        = "kmaster"
   route53_zone_id_private = "${var.alb_route53_zone_id_private}"
   dns_names_public        = ["kmaster"]
   route53_zone_id_public  = "${var.alb_route53_zone_id_public}"
+
+  listeners = [
+    {
+      port         = 8080
+      protocol     = "HTTP"
+      health_check = "/healthz"
+    },
+    {
+      port            = 443
+      protocol        = "HTTPS"
+      health_check    = "/healthz"
+      certificate_arn = "${var.certificate_arn}"
+    },
+    {
+      port         = 4001
+      protocol     = "HTTP"
+      health_check = "/health"
+    },
+  ]
 }
 
 data "template_file" "start" {

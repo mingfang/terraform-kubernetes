@@ -113,6 +113,16 @@ variable "peering_subnets" {
   default = ["10.248.1.0/32", "10.248.1.10/32", "10.248.1.0/24"]
 }
 
+variable "kmaster_certificate_arn" {}
+
+variable "admin_certificate_arn" {
+  default = ""
+}
+
+variable "com_certificate_arn" {
+  default = ""
+}
+
 # Resources
 
 //data "aws_availability_zones" "available" {}
@@ -180,6 +190,7 @@ module "kmaster" {
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
   image_id                    = "${data.aws_ami.kubernetes.id}"
   efs_dns_name                = "${module.efs.fqdn}"
+  certificate_arn             = "${var.kmaster_certificate_arn}"
 }
 
 module "green_zone" {
@@ -248,6 +259,7 @@ module "admin_zone" {
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
   kmaster           = "${module.kmaster.fqdn}"
+  certificate_arn   = "${var.admin_certificate_arn}"
 
   alb_enable                  = "${var.admin_size > 0}"
   alb_internal                = false
@@ -273,6 +285,7 @@ module "com_zone" {
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
   kmaster           = "${module.kmaster.fqdn}"
+  certificate_arn   = "${var.com_certificate_arn}"
 
   alb_enable                  = "${var.com_size > 0}"
   alb_internal                = false
