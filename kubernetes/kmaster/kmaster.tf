@@ -54,35 +54,174 @@ module "subnets" {
   nat_gateway_ids = "${var.nat_ids}"
 }
 
-module "alb" {
-  source                  = "../../vpc/alb"
-  name                    = "${var.name}"
-  vpc_id                  = "${var.vpc_id}"
-  subnet_ids              = ["${var.alb_subnet_ids}"]
-  internal                = false                                //todo, should be true
-  dns_name_private        = "kmaster"
-  route53_zone_id_private = "${var.alb_route53_zone_id_private}"
-  dns_names_public        = ["kmaster"]
-  route53_zone_id_public  = "${var.alb_route53_zone_id_public}"
+resource "aws_iam_role" "kmaster_role" {
+  name = "${var.name}-role"
 
-  listeners = [
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
     {
-      port         = 8080
-      protocol     = "HTTP"
-      health_check = "/healthz"
-    },
-    {
-      port            = 443
-      protocol        = "HTTPS"
-      health_check    = "/healthz"
-      certificate_arn = "${var.certificate_arn}"
-    },
-    {
-      port         = 4001
-      protocol     = "HTTP"
-      health_check = "/health"
-    },
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Sid": "",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      }
+    }
   ]
+}
+EOF
+}
+
+resource "aws_iam_instance_profile" "kmaster_profile" {
+  name = "${var.name}-profile"
+  role = "${aws_iam_role.kmaster_role.name}"
+}
+
+resource "aws_iam_role_policy" "kmaster_policy" {
+  name = "${var.name}-policy"
+  role = "${aws_iam_role.kmaster_role.id}"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "iam:GetInstanceProfile"
+      ],
+      "Resource": [
+        "*"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_elb" "public" {
+  name                        = "${var.name}-public-elb"
+  subnets                     = ["${var.alb_subnet_ids}"]
+  cross_zone_load_balancing   = true
+  idle_timeout                = 500
+  connection_draining         = true
+  connection_draining_timeout = 10
+  security_groups             = ["${aws_security_group.elb_sg.id}"]
+
+  listener {
+    instance_port     = 443
+    instance_protocol = "tcp"
+    lb_port           = 443
+    lb_protocol       = "tcp"
+  }
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "TCP:443"
+    interval            = 10
+  }
+}
+
+resource "aws_elb" "private" {
+  name                        = "${var.name}-private-elb"
+  subnets                     = ["${module.subnets.ids}"]
+  internal                    = true
+  cross_zone_load_balancing   = true
+  idle_timeout                = 500
+  connection_draining         = true
+  connection_draining_timeout = 10
+  security_groups             = ["${aws_security_group.elb_sg.id}"]
+
+  listener {
+    instance_port     = 443
+    instance_protocol = "tcp"
+    lb_port           = 443
+    lb_protocol       = "tcp"
+  }
+
+  listener {
+    instance_port     = 4001
+    instance_protocol = "tcp"
+    lb_port           = 4001
+    lb_protocol       = "tcp"
+  }
+
+  listener {
+    instance_port     = 8200
+    instance_protocol = "tcp"
+    lb_port           = 8200
+    lb_protocol       = "tcp"
+  }
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "TCP:443"
+    interval            = 10
+  }
+}
+
+resource "aws_security_group" "elb_sg" {
+  name   = "${var.name}-elb-sg"
+  vpc_id = "${var.vpc_id}"
+
+  ingress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+
+    cidr_blocks = [
+      "0.0.0.0/0",
+    ]
+  }
+
+  egress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+
+    cidr_blocks = [
+      "0.0.0.0/0",
+    ]
+  }
+
+  tags {
+    Name = "${var.name}-elb-sg"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_route53_record" "private" {
+  zone_id = "${var.alb_route53_zone_id_private}"
+  name    = "kmaster"
+  type    = "A"
+
+  alias {
+    name                   = "${aws_elb.private.dns_name}"
+    zone_id                = "${aws_elb.private.zone_id}"
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "public" {
+  name    = "kmaster"
+  zone_id = "${var.alb_route53_zone_id_public}"
+  type    = "A"
+
+  alias {
+    name                   = "${aws_elb.public.dns_name}"
+    zone_id                = "${aws_elb.public.zone_id}"
+    evaluate_target_health = true
+  }
 }
 
 data "template_file" "start" {
@@ -90,6 +229,8 @@ data "template_file" "start" {
 
   vars {
     efs_dns_name = "${var.efs_dns_name}"
+    vpc_id       = "${var.vpc_id}"
+    alt_names    = "${aws_route53_record.private.fqdn},${aws_route53_record.public.fqdn}"
   }
 }
 
@@ -101,6 +242,7 @@ resource "aws_launch_configuration" "lc" {
   security_groups             = ["${aws_security_group.sg.id}"]
   associate_public_ip_address = false
   user_data                   = "${data.template_file.start.rendered}"
+  iam_instance_profile        = "${aws_iam_instance_profile.kmaster_profile.name}"
 
   root_block_device {
     volume_size           = "8"
@@ -114,14 +256,15 @@ resource "aws_launch_configuration" "lc" {
 }
 
 resource "aws_autoscaling_group" "asg" {
-  name                 = "${var.name}"
-  desired_capacity     = 1
-  min_size             = 1
-  max_size             = 1
-  default_cooldown     = 60
-  launch_configuration = "${aws_launch_configuration.lc.name}"
-  vpc_zone_identifier  = ["${module.subnets.ids}"]
-  target_group_arns    = ["${module.alb.target_group_arns}"]
+  name                      = "${var.name}"
+  desired_capacity          = 1
+  min_size                  = 1
+  max_size                  = 1
+  default_cooldown          = 60
+  health_check_grace_period = 60
+  launch_configuration      = "${aws_launch_configuration.lc.name}"
+  vpc_zone_identifier       = ["${module.subnets.ids}"]
+  load_balancers            = ["${aws_elb.private.id}", "${aws_elb.public.id}"]
 
   tag {
     key                 = "Name"
@@ -155,6 +298,14 @@ resource "aws_security_group" "sg" {
     protocol    = "tcp"
     from_port   = 443
     to_port     = 443
+    cidr_blocks = ["${var.vpc_cidr}"]
+  }
+
+  //VAULT
+  ingress {
+    protocol    = "tcp"
+    from_port   = 8200
+    to_port     = 8200
     cidr_blocks = ["${var.vpc_cidr}"]
   }
 
@@ -199,5 +350,5 @@ output "security_group_id" {
 }
 
 output "fqdn" {
-  value = "${module.alb.private_fqdn}"
+  value = "${aws_route53_record.private.fqdn}"
 }

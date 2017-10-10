@@ -11,7 +11,7 @@ until docker info; do
     sleep 3
 done
 
-until curl http://$KMASTER:8080/healthz; do
+until curl -k https://$KMASTER:443/healthz; do
     echo "Waiting for kmaster to come online..."
     sleep 3;
 done
@@ -22,6 +22,10 @@ AMI_ID=`curl http://169.254.169.254/latest/meta-data/ami-id`
 DOCKER=`docker version --format '{{.Server.Version}}'`
 export LABELS="zone=${zone},aws.az=$AZ,aws.instance-type=$INSTANCE_TYPE,aws.ami-id=$AMI_ID,docker=$DOCKER"
 echo "LABELS=$LABELS"
+
+export VAULT_ADDR=http://$KMASTER:8200
+AUTH_RESULT=$(curl -X POST $VAULT_ADDR/v1/auth/aws/login -d '{"role": "knode", "pkcs7":"'"$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/pkcs7 | tr -d \\n)"'"}')
+export VAULT_TOKEN=$(echo $AUTH_RESULT | jq -r .auth.client_token)
 
 cd ~root/docker-kubernetes-node
 ./run $KMASTER

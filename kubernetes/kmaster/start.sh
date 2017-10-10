@@ -3,6 +3,8 @@
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 export EFS_DNS_NAME="${efs_dns_name}"
+export VPC_ID="${vpc_id}"
+export ALT_NAMES="${alt_names}"
 
 mkdir -p /mnt/data
 
@@ -18,5 +20,5 @@ fi
 
 mkdir -p /mnt/data/kmaster/etcd-data
 cd ~root/docker-kubernetes-master
-docker run --name kmaster -v /mnt/data/kmaster/etcd-data:/var/lib/etcd-data --net=host -p 4001:4001 -p 8080:8080 -v /var/log:/var/log -d kubernetes-master
+./run
 docker ps
