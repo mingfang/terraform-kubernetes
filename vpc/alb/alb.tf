@@ -38,7 +38,7 @@ variable "dns_names_public" {
 
 resource "aws_alb" "alb" {
   count    = "${var.enable ? 1 : 0}"
-  name     = "${var.name}"
+  name     = "${var.name}-alb"
   internal = "${var.internal}"
 
   subnets = [
@@ -91,7 +91,7 @@ resource "aws_alb_target_group" "atg" {
 
 resource "aws_security_group" "sg" {
   count  = "${var.enable ? 1 : 0}"
-  name   = "${var.name}-alb"
+  name   = "${var.name}-alb-sg"
   vpc_id = "${var.vpc_id}"
 
   egress {
@@ -105,7 +105,7 @@ resource "aws_security_group" "sg" {
   }
 
   tags {
-    Name = "${var.name}-alb"
+    Name = "${var.name}-alb-sg"
   }
 
   lifecycle {
