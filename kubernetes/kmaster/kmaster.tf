@@ -242,12 +242,12 @@ data "template_file" "start" {
   template = "${file("${path.module}/start.sh")}"
 
   vars {
-    efs_dns_name = "${var.efs_dns_name}"
-    vpc_id       = "${var.vpc_id}"
-    alt_names    = "${aws_route53_record.private.fqdn},${aws_route53_record.public.fqdn},${aws_elb.public.dns_name}"
-    bucket       = "${aws_s3_bucket.keys.id}"
-    iam_role     = "${aws_iam_role.kmaster_role.id}"
+    vpc_id            = "${var.vpc_id}"
+    efs_dns_name      = "${var.efs_dns_name}"
+    bucket            = "${aws_s3_bucket.keys.id}"
+    iam_role          = "${aws_iam_role.kmaster_role.id}"
     kubernetes_master = "https://${aws_route53_record.public.fqdn}:6443"
+    alt_names         = "${aws_route53_record.private.fqdn},${aws_route53_record.public.fqdn},${aws_elb.public.dns_name}"
   }
 }
 
@@ -293,7 +293,7 @@ resource "aws_autoscaling_group" "asg" {
 resource "aws_security_group" "sg" {
   name   = "${var.name}"
   vpc_id = "${var.vpc_id}"
-  
+
   //ETCD
   ingress {
     protocol    = "tcp"

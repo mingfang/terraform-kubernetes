@@ -12,13 +12,8 @@ export KUBERNETES_MASTER="${kubernetes_master}"
 #mount EFS
 mkdir -p /mnt/data
 if [ $EFS_DNS_NAME ]; then
-    until nslookup $EFS_DNS_NAME; do
-        echo "Waiting for EFS $EFS_DNS_NAME..."
-        sleep 5
-    done
-
+    until nslookup $EFS_DNS_NAME; do echo "Waiting for EFS $EFS_DNS_NAME..."; sleep 5; done
     mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 $EFS_DNS_NAME:/ /mnt/data
-    mount
 fi
 
 #persist cluster state in EFS mount
