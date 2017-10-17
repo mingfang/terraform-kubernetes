@@ -207,7 +207,7 @@ module "green_zone" {
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
-  kmaster           = "${module.kmaster.fqdn}"
+  kmaster           = "${module.kmaster.private_fqdn}"
 }
 
 module "net_zone" {
@@ -224,7 +224,7 @@ module "net_zone" {
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
-  kmaster           = "${module.kmaster.fqdn}"
+  kmaster           = "${module.kmaster.private_fqdn}"
 }
 
 module "db_zone" {
@@ -241,7 +241,7 @@ module "db_zone" {
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
-  kmaster           = "${module.kmaster.fqdn}"
+  kmaster           = "${module.kmaster.private_fqdn}"
 }
 
 module "admin_zone" {
@@ -258,7 +258,7 @@ module "admin_zone" {
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
-  kmaster           = "${module.kmaster.fqdn}"
+  kmaster           = "${module.kmaster.private_fqdn}"
   certificate_arn   = "${var.admin_certificate_arn}"
 
   alb_enable                  = "${var.admin_size > 0}"
@@ -284,7 +284,7 @@ module "com_zone" {
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
-  kmaster           = "${module.kmaster.fqdn}"
+  kmaster           = "${module.kmaster.private_fqdn}"
   certificate_arn   = "${var.com_certificate_arn}"
 
   alb_enable                  = "${var.com_size > 0}"
@@ -374,6 +374,10 @@ output "efs_fqdn" {
 
 output "bastion_fqdn" {
   value = "${module.bastion.fqdn}"
+}
+
+output "kmaster_fqdn" {
+  value = "${module.kmaster.public_fqdn}"
 }
 
 output "route53_private_id" {

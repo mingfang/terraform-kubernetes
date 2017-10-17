@@ -96,6 +96,15 @@ resource "aws_iam_role_policy" "kmaster_policy" {
       "Resource": [
         "*"
       ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "*"
+      ]
     }
   ]
 }
@@ -112,9 +121,9 @@ resource "aws_elb" "public" {
   security_groups             = ["${aws_security_group.elb_sg.id}"]
 
   listener {
-    instance_port     = 443
+    instance_port     = 6443
     instance_protocol = "tcp"
-    lb_port           = 443
+    lb_port           = 6443
     lb_protocol       = "tcp"
   }
 
@@ -122,7 +131,7 @@ resource "aws_elb" "public" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
-    target              = "TCP:443"
+    target              = "TCP:6443"
     interval            = 10
   }
 }
@@ -138,9 +147,9 @@ resource "aws_elb" "private" {
   security_groups             = ["${aws_security_group.elb_sg.id}"]
 
   listener {
-    instance_port     = 443
+    instance_port     = 6443
     instance_protocol = "tcp"
-    lb_port           = 443
+    lb_port           = 6443
     lb_protocol       = "tcp"
   }
 
@@ -162,7 +171,7 @@ resource "aws_elb" "private" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
-    target              = "TCP:443"
+    target              = "TCP:6443"
     interval            = 10
   }
 }
@@ -224,13 +233,21 @@ resource "aws_route53_record" "public" {
   }
 }
 
+resource "aws_s3_bucket" "keys" {
+  bucket_prefix = "${var.name}-keys-"
+  acl           = "private"
+}
+
 data "template_file" "start" {
   template = "${file("${path.module}/start.sh")}"
 
   vars {
     efs_dns_name = "${var.efs_dns_name}"
     vpc_id       = "${var.vpc_id}"
-    alt_names    = "${aws_route53_record.private.fqdn},${aws_route53_record.public.fqdn}"
+    alt_names    = "${aws_route53_record.private.fqdn},${aws_route53_record.public.fqdn},${aws_elb.public.dns_name}"
+    bucket       = "${aws_s3_bucket.keys.id}"
+    iam_role     = "${aws_iam_role.kmaster_role.id}"
+    kubernetes_master = "https://${aws_route53_record.public.fqdn}:6443"
   }
 }
 
@@ -276,15 +293,7 @@ resource "aws_autoscaling_group" "asg" {
 resource "aws_security_group" "sg" {
   name   = "${var.name}"
   vpc_id = "${var.vpc_id}"
-
-  //KMASTER
-  ingress {
-    protocol    = "tcp"
-    from_port   = 8080
-    to_port     = 8080
-    cidr_blocks = ["${var.vpc_cidr}"]
-  }
-
+  
   //ETCD
   ingress {
     protocol    = "tcp"
@@ -296,8 +305,8 @@ resource "aws_security_group" "sg" {
   //KMASTER
   ingress {
     protocol    = "tcp"
-    from_port   = 443
-    to_port     = 443
+    from_port   = 6443
+    to_port     = 6443
     cidr_blocks = ["${var.vpc_cidr}"]
   }
 
@@ -349,6 +358,10 @@ output "security_group_id" {
   value = "${aws_security_group.sg.id}"
 }
 
-output "fqdn" {
+output "private_fqdn" {
   value = "${aws_route53_record.private.fqdn}"
+}
+
+output "public_fqdn" {
+  value = "${aws_route53_record.public.fqdn}"
 }

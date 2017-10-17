@@ -11,9 +11,9 @@ until docker info; do
     sleep 3
 done
 
-until curl -k https://$KMASTER:443/healthz; do
+until curl -k https://$KMASTER:6443/healthz; do
     echo "Waiting for kmaster to come online..."
-    sleep 3;
+    sleep 10;
 done
 
 AZ=`curl http://169.254.169.254/latest/meta-data/placement/availability-zone`
