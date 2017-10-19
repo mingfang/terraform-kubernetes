@@ -116,7 +116,7 @@ data "template_file" "start" {
 
 resource "aws_launch_configuration" "lc" {
   count                       = "${var.size > 0 ? 1: 0}"
-  name_prefix                 = "${var.name}"
+  name_prefix                 = "${var.name}-"
   instance_type               = "${var.instance_type}"
   image_id                    = "${var.image_id}"
   key_name                    = "${var.key_name}"
@@ -137,7 +137,7 @@ resource "aws_launch_configuration" "lc" {
 
 resource "aws_autoscaling_group" "asg" {
   count                = "${var.size > 0 ? 1: 0}"
-  name_prefix          = "${var.name}"
+  name_prefix          = "${var.name}-"
   desired_capacity     = "${var.size}"
   min_size             = "${var.size}"
   max_size             = "${var.size}"
