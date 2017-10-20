@@ -9,7 +9,7 @@ cd ~root/docker-kubernetes-node
 ./fan-setup.sh
 
 until docker info; do echo "Waiting for docker..."; sleep 10; done
-until curl https://$KMASTER:6443/healthz; do echo "Waiting for kmaster..."; sleep 10; done
+until curl -k https://$KMASTER:6443/healthz; do echo "Waiting for kmaster..."; sleep 10; done
 
 AZ=`curl http://169.254.169.254/latest/meta-data/placement/availability-zone`
 INSTANCE_TYPE=`curl http://169.254.169.254/latest/meta-data/instance-type`
