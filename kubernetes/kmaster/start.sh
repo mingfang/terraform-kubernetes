@@ -6,10 +6,11 @@ export EFS_DNS_NAME="${efs_dns_name}"
 export VPC_ID="${vpc_id}"
 export ALT_NAMES="${alt_names}"
 export BUCKET="${bucket}"
-export IAM_ROLE="${iam_role}"
+export AWS_PROFILE="${iam_role}"
 export KUBERNETES_MASTER="${kubernetes_master}"
 
 #mount EFS
+
 mkdir -p /mnt/data
 if [ $EFS_DNS_NAME ]; then
     until nslookup $EFS_DNS_NAME; do echo "Waiting for EFS $EFS_DNS_NAME..."; sleep 5; done
@@ -17,19 +18,23 @@ if [ $EFS_DNS_NAME ]; then
 fi
 
 #persist cluster state in EFS mount
+
 mkdir -p /mnt/data/kmaster/{etcd-data,vault-data,pki-data}
 rm -r ~root/docker-kubernetes-master/{etcd-data,vault-data,pki-data}
 ln -s /mnt/data/kmaster/{etcd-data,vault-data,pki-data} ~root/docker-kubernetes-master
 
 #start
+export REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -c -r .region)
+
 cd ~root/docker-kubernetes-master
 ./run
 
 #upload kubernetes pki to s3
+
 cd ~root/docker-kubernetes-master/pki-data
 until curl localhost:8080/healthz; do echo "Waiting for kubernetes..."; sleep 10; done
 
-KEYS=$(curl http://169.254.169.254/latest/meta-data/iam/security-credentials/$IAM_ROLE)
+KEYS=$(curl http://169.254.169.254/latest/meta-data/iam/security-credentials/$AWS_PROFILE)
 ACCESS_KEY=$(echo $KEYS|jq -r .AccessKeyId)
 SECRET_KEY=$(echo $KEYS|jq -r .SecretAccessKey)
 TOKEN=$(echo $KEYS|jq -r .Token)

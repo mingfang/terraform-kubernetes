@@ -17,14 +17,15 @@ until curl -k https://$KMASTER:6443/healthz; do echo "Waiting for kmaster..."; s
 
 #setup labels
 
-REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -c -r .region)
+export REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -c -r .region)
 AZ=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone)
 INSTANCE_TYPE=$(curl http://169.254.169.254/latest/meta-data/instance-type)
+INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 AMI_ID=$(curl http://169.254.169.254/latest/meta-data/ami-id)
 DOCKER=$(docker version --format '{{.Server.Version}}')
 SHA=$(git rev-parse --short HEAD)
-export LABELS="zone=$ZONE,sha=$SHA,failure-domain.beta.kubernetes.
-io/region=$REGION,failure-domain.beta.kubernetes.io/zone=$AZ,beta.kubernetes.io/instance-type=$INSTANCE_TYPE,ami=$AMI_ID,docker=$DOCKER"
+export LABELS="zone=$ZONE,sha=$SHA,ami=$AMI_ID,docker=$DOCKER,instance-id=$INSTANCE_ID"
+export LABELS="$LABELS,failure-domain.beta.kubernetes.io/region=$REGION,failure-domain.beta.kubernetes.io/zone=$AZ,beta.kubernetes.io/instance-type=$INSTANCE_TYPE"
 echo "LABELS=$LABELS"
 
 #setup vault
@@ -34,6 +35,7 @@ AUTH_RESULT=$(curl -X POST $VAULT_ADDR/v1/auth/aws/login -d '{"role": "knode", "
 export VAULT_TOKEN=$(echo $AUTH_RESULT | jq -r .auth.client_token)
 
 #start
+export NODE_NAME="$INSTANCE_ID"
 
 cd ~root/docker-kubernetes-node
 ./run $KMASTER
