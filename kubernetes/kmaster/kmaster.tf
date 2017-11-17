@@ -54,7 +54,7 @@ module "subnets" {
   nat_gateway_ids = "${var.nat_ids}"
 }
 
-resource "aws_iam_role" "kmaster_role" {
+resource "aws_iam_role" "iam_role" {
   name = "${var.name}-role"
 
   assume_role_policy = <<EOF
@@ -74,14 +74,14 @@ resource "aws_iam_role" "kmaster_role" {
 EOF
 }
 
-resource "aws_iam_instance_profile" "kmaster_profile" {
+resource "aws_iam_instance_profile" "instance_profile" {
   name = "${var.name}-profile"
-  role = "${aws_iam_role.kmaster_role.name}"
+  role = "${aws_iam_role.iam_role.name}"
 }
 
-resource "aws_iam_role_policy" "kmaster_policy" {
+resource "aws_iam_role_policy" "role_policy" {
   name = "${var.name}-policy"
-  role = "${aws_iam_role.kmaster_role.id}"
+  role = "${aws_iam_role.iam_role.id}"
 
   policy = <<EOF
 {
@@ -101,6 +101,17 @@ resource "aws_iam_role_policy" "kmaster_policy" {
       "Effect": "Allow",
       "Action": [
         "s3:PutObject"
+      ],
+      "Resource": [
+        "*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:AttachVolume",
+        "ec2:DetachVolume",
+        "ec2:DescribeVolumes"
       ],
       "Resource": [
         "*"
@@ -245,7 +256,7 @@ data "template_file" "start" {
     vpc_id            = "${var.vpc_id}"
     efs_dns_name      = "${var.efs_dns_name}"
     bucket            = "${aws_s3_bucket.keys.id}"
-    iam_role          = "${aws_iam_role.kmaster_role.id}"
+    iam_role          = "${aws_iam_role.iam_role.id}"
     kubernetes_master = "https://${aws_route53_record.public.fqdn}:6443"
     alt_names         = "${aws_route53_record.private.fqdn},${aws_route53_record.public.fqdn},${aws_elb.public.dns_name}"
   }
@@ -259,7 +270,7 @@ resource "aws_launch_configuration" "lc" {
   security_groups             = ["${aws_security_group.sg.id}"]
   associate_public_ip_address = false
   user_data                   = "${data.template_file.start.rendered}"
-  iam_instance_profile        = "${aws_iam_instance_profile.kmaster_profile.name}"
+  iam_instance_profile        = "${aws_iam_instance_profile.instance_profile.name}"
 
   root_block_device {
     volume_size           = "8"
