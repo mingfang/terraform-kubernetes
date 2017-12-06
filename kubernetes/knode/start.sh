@@ -35,8 +35,6 @@ AUTH_RESULT=$(curl -X POST $VAULT_ADDR/v1/auth/aws/login -d '{"role": "knode", "
 export VAULT_TOKEN=$(echo $AUTH_RESULT | jq -r .auth.client_token)
 
 #start
-export NODE_NAME="$INSTANCE_ID"
-
 cd ~root/docker-kubernetes-node
 ./run $KMASTER
 docker ps
