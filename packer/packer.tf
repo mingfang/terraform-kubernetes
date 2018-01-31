@@ -98,6 +98,19 @@ resource "aws_security_group" "sg" {
   }
 }
 
+#Output
+
+resource "local_file" "output" {
+  filename = "${path.cwd}/packer_vars.json"
+  content     = <<EOF
+{
+  "packer_region": "${var.region}",
+  "packer_vpc_id": "${aws_vpc.vpc.id}",
+  "packer_subnet_id": "${aws_subnet.subnet.id}"
+}
+EOF
+}
+
 output "region" {
   value = "${var.region}"
 }
