@@ -245,8 +245,8 @@ resource "aws_route53_record" "public" {
 }
 
 resource "aws_s3_bucket" "keys" {
-  bucket_prefix = "${var.name}-keys-"
-  acl           = "private"
+  bucket = "${var.name}-kubeconfig"
+  acl    = "private"
 }
 
 data "template_file" "start" {
