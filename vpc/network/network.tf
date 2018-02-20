@@ -109,7 +109,7 @@ output "route53_private_id" {
 }
 
 output "route53_public_id" {
-  value = "${aws_route53_zone.public.*.id}"
+  value = "${join(" ", aws_route53_zone.public.*.id)}"
 }
 
 output "security_group_id" {
