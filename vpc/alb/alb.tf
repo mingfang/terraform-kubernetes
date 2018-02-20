@@ -162,11 +162,11 @@ output "target_group_arns" {
 }
 
 output "alb_arn" {
-  value = "${aws_alb.alb.arn}"
+  value = "${aws_alb.alb.*.arn}"
 }
 
 output "private_fqdn" {
-  value = "${aws_route53_record.private.fqdn}"
+  value = "${aws_route53_record.private.*.fqdn}"
 }
 
 output "public_fqdns" {
