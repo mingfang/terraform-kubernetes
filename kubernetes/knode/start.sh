@@ -25,7 +25,7 @@ AMI_ID=$(curl http://169.254.169.254/latest/meta-data/ami-id)
 DOCKER=$(docker version --format '{{.Server.Version}}')
 SHA=$(git rev-parse --short HEAD)
 export LABELS="zone=$ZONE,sha=$SHA,ami=$AMI_ID,docker=$DOCKER,instance-id=$INSTANCE_ID"
-export LABELS="$LABELS,failure-domain.beta.kubernetes.io/region=$REGION,failure-domain.beta.kubernetes.io/zone=$AZ,beta.kubernetes.io/instance-type=$INSTANCE_TYPE"
+export LABELS="$LABELS,kubernetes.io/role=$ZONE,failure-domain.beta.kubernetes.io/region=$REGION,failure-domain.beta.kubernetes.io/zone=$AZ,beta.kubernetes.io/instance-type=$INSTANCE_TYPE"
 echo "LABELS=$LABELS"
 
 #setup vault
