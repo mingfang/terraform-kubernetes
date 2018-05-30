@@ -21,6 +21,11 @@ resource "aws_eip" "nat" {
   lifecycle {
     create_before_destroy = true
   }
+
+  tags {
+    Name = "${var.name}-eip"
+  }
+
 }
 
 resource "aws_nat_gateway" "nat" {
@@ -30,6 +35,10 @@ resource "aws_nat_gateway" "nat" {
 
   lifecycle {
     create_before_destroy = true
+  }
+
+  tags {
+    Name = "${var.name}"
   }
 }
 
