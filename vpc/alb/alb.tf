@@ -4,6 +4,9 @@ variable "name" {}
 
 variable "vpc_id" {}
 
+variable "listeners_count"{
+  default = 0
+}
 variable "listeners" {
   type    = "list"
   default = []
@@ -51,7 +54,7 @@ resource "aws_alb" "alb" {
 }
 
 resource "aws_alb_listener" "listener" {
-  count             = "${var.enable ? length(var.listeners) : 0}"
+  count             = "${var.enable ? var.listeners_count : 0}"
   load_balancer_arn = "${aws_alb.alb.id}"
   port              = "${lookup(var.listeners[count.index], "port")}"
   protocol          = "${lookup(var.listeners[count.index], "protocol")}"
@@ -64,7 +67,7 @@ resource "aws_alb_listener" "listener" {
 }
 
 resource "aws_alb_target_group" "atg" {
-  count       = "${var.enable ? length(var.listeners) : 0}"
+  count       = "${var.enable ? var.listeners_count : 0}"
   name_prefix = "${substr("${var.name}-${lookup(var.listeners[count.index], "port")}", 0, 6)}"
   vpc_id      = "${var.vpc_id}"
   port        = "${lookup(var.listeners[count.index], "port")}"
@@ -115,7 +118,7 @@ resource "aws_security_group" "sg" {
 }
 
 resource "aws_security_group_rule" "rules" {
-  count             = "${var.enable ? length(var.listeners) : 0}"
+  count             = "${var.enable ? var.listeners_count : 0}"
   security_group_id = "${aws_security_group.sg.id}"
   type              = "ingress"
   protocol          = "tcp"

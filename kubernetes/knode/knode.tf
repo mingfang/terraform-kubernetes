@@ -90,6 +90,7 @@ module "alb" {
   dns_names_public        = "${var.alb_dns_names_public}"
   route53_zone_id_public  = "${var.alb_route53_zone_id_public}"
 
+  listeners_count = 2
   listeners = [
     {
       port         = 80
