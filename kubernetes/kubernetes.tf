@@ -241,6 +241,13 @@ module "db_zone" {
   kmaster           = "${module.kmaster.private_fqdn}"
 }
 
+module "admin_cert" {
+  source      = "../vpc/certifcate"
+  domain_name = "*.admin.${var.public_domain}"
+  zone_id     = "${module.network.route53_public_id}"
+  enable      = "${var.admin_size > 0 && var.public_domain != "" && var.com_certificate_arn == ""}"
+}
+
 module "admin_zone" {
   source            = "./knode"
   name              = "${var.name}-knodes-admin"
@@ -256,7 +263,7 @@ module "admin_zone" {
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
   kmaster           = "${module.kmaster.private_fqdn}"
-  certificate_arn   = "${var.admin_certificate_arn}"
+  certificate_arn   = "${var.admin_certificate_arn != "" ? var.admin_certificate_arn : module.admin_cert.arn}"
 
   alb_enable                  = "${var.admin_size > 0}"
   alb_internal                = false
@@ -265,6 +272,13 @@ module "admin_zone" {
   alb_route53_zone_id_private = "${module.network.route53_private_id}"
   alb_dns_names_public        = ["*.admin.${var.public_domain}"]
   alb_route53_zone_id_public  = "${module.network.route53_public_id}"
+}
+
+module "com_cert" {
+  source      = "../vpc/certifcate"
+  domain_name = "*.${var.public_domain}"
+  zone_id     = "${module.network.route53_public_id}"
+  enable      = "${var.com_size > 0 && var.public_domain != "" && var.com_certificate_arn == ""}"
 }
 
 module "com_zone" {
@@ -282,7 +296,7 @@ module "com_zone" {
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
   kmaster           = "${module.kmaster.private_fqdn}"
-  certificate_arn   = "${var.com_certificate_arn}"
+  certificate_arn   = "${var.com_certificate_arn != "" ? var.com_certificate_arn : module.com_cert.arn}"
 
   alb_enable                  = "${var.com_size > 0}"
   alb_internal                = false
