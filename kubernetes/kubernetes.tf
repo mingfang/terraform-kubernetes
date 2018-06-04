@@ -113,8 +113,6 @@ variable "peering_subnets" {
   default = ["10.248.1.0/32", "10.248.1.10/32", "10.248.1.0/24"]
 }
 
-variable "kmaster_certificate_arn" {}
-
 variable "admin_certificate_arn" {
   default = ""
 }
@@ -190,7 +188,6 @@ module "kmaster" {
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
   image_id                    = "${data.aws_ami.kubernetes.id}"
   efs_dns_name                = "${module.efs.fqdn}"
-  certificate_arn             = "${var.kmaster_certificate_arn}"
 }
 
 module "green_zone" {
