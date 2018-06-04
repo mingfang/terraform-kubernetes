@@ -4,9 +4,10 @@ variable "name" {}
 
 variable "vpc_id" {}
 
-variable "listeners_count"{
+variable "listeners_count" {
   default = 0
 }
+
 variable "listeners" {
   type    = "list"
   default = []
