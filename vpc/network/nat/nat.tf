@@ -25,7 +25,6 @@ resource "aws_eip" "nat" {
   tags {
     Name = "${var.name}-eip"
   }
-
 }
 
 resource "aws_nat_gateway" "nat" {
