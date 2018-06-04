@@ -41,8 +41,6 @@ variable "alb_subnet_ids" {
   default = []
 }
 
-variable "certificate_arn" {}
-
 # Resources
 
 module "subnets" {
