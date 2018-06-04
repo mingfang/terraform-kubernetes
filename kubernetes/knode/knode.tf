@@ -91,6 +91,7 @@ module "alb" {
   route53_zone_id_public  = "${var.alb_route53_zone_id_public}"
 
   listeners_count = 2
+
   listeners = [
     {
       port         = 80
