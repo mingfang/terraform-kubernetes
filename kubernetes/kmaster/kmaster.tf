@@ -297,6 +297,8 @@ resource "aws_autoscaling_group" "asg" {
     value               = "${var.name}"
     propagate_at_launch = true
   }
+
+  depends_on = ["aws_s3_bucket.keys"]
 }
 
 resource "aws_security_group" "sg" {
