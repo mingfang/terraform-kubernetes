@@ -245,6 +245,7 @@ resource "aws_route53_record" "public" {
 resource "aws_s3_bucket" "keys" {
   bucket_prefix = "${var.name}-keys-"
   acl           = "private"
+  force_destroy = true
 }
 
 data "template_file" "start" {
