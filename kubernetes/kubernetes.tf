@@ -2,7 +2,11 @@
 
 variable "name" {}
 
-variable "public_domain" {}
+variable "route53_zone_id" {}
+
+data "aws_route53_zone" "public" {
+  zone_id = "${var.route53_zone_id}"
+}
 
 variable "access_key" {}
 
@@ -144,7 +148,6 @@ module "vpc" {
 module "network" {
   source         = "../vpc/network"
   name           = "${var.name}"
-  public_domain  = "${var.public_domain}"
   vpc_id         = "${module.vpc.id}"
   vpc_cidr       = "${module.vpc.cidr}"
   azs            = "${var.azs}"
@@ -170,7 +173,7 @@ module "bastion" {
   vpc_id          = "${module.vpc.id}"
   vpc_cidr        = "${var.vpc_cidr}"
   subnet_id       = "${element(module.network.public_subnet_ids, 0)}"
-  route53_zone_id = "${module.network.route53_public_id}"
+  route53_zone_id = "${var.route53_zone_id}"
 }
 
 module "kmaster" {
@@ -184,7 +187,7 @@ module "kmaster" {
   subnets                     = "${var.kmaster_subnets}"
   key_name                    = "${aws_key_pair.cluster_key_pair.key_name}"
   alb_route53_zone_id_private = "${module.network.route53_private_id}"
-  alb_route53_zone_id_public  = "${module.network.route53_public_id}"
+  alb_route53_zone_id_public  = "${var.route53_zone_id}"
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
   image_id                    = "${data.aws_ami.kubernetes.id}"
   efs_dns_name                = "${module.efs.fqdn}"
@@ -241,13 +244,6 @@ module "db_zone" {
   kmaster           = "${module.kmaster.private_fqdn}"
 }
 
-module "admin_cert" {
-  source      = "../vpc/certifcate"
-  domain_name = "*.admin.${var.public_domain}"
-  zone_id     = "${module.network.route53_public_id}"
-  enable      = "${var.admin_size > 0 && var.public_domain != "" && var.com_certificate_arn == ""}"
-}
-
 module "admin_zone" {
   source            = "./knode"
   name              = "${var.name}-knodes-admin"
@@ -263,22 +259,15 @@ module "admin_zone" {
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
   kmaster           = "${module.kmaster.private_fqdn}"
-  certificate_arn   = "${var.admin_certificate_arn != "" ? var.admin_certificate_arn : module.admin_cert.arn}"
+  certificate_arn   = "${var.admin_certificate_arn}"
 
   alb_enable                  = "${var.admin_size > 0}"
   alb_internal                = false
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
   alb_dns_name_private        = "admin"
   alb_route53_zone_id_private = "${module.network.route53_private_id}"
-  alb_dns_names_public        = ["*.admin.${var.public_domain}"]
-  alb_route53_zone_id_public  = "${module.network.route53_public_id}"
-}
-
-module "com_cert" {
-  source      = "../vpc/certifcate"
-  domain_name = "*.${var.public_domain}"
-  zone_id     = "${module.network.route53_public_id}"
-  enable      = "${var.com_size > 0 && var.public_domain != "" && var.com_certificate_arn == ""}"
+  alb_dns_names_public        = ["*.admin.${data.aws_route53_zone.public.name}"]
+  alb_route53_zone_id_public  = "${var.route53_zone_id}"
 }
 
 module "com_zone" {
@@ -296,15 +285,15 @@ module "com_zone" {
   security_group_id = "${module.network.security_group_id}"
   image_id          = "${data.aws_ami.kubernetes.id}"
   kmaster           = "${module.kmaster.private_fqdn}"
-  certificate_arn   = "${var.com_certificate_arn != "" ? var.com_certificate_arn : module.com_cert.arn}"
+  certificate_arn   = "${var.com_certificate_arn}"
 
   alb_enable                  = "${var.com_size > 0}"
   alb_internal                = false
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
   alb_dns_name_private        = "com"
   alb_route53_zone_id_private = "${module.network.route53_private_id}"
-  alb_dns_names_public        = ["*.${var.public_domain}"]
-  alb_route53_zone_id_public  = "${module.network.route53_public_id}"
+  alb_dns_names_public        = ["*.${data.aws_route53_zone.public.name}"]
+  alb_route53_zone_id_public  = "${var.route53_zone_id}"
 }
 
 module "efs" {
@@ -359,18 +348,6 @@ resource "aws_network_acl" "acl" {
 
 # OUTPUTS
 
-output "name" {
-  value = "${var.name}"
-}
-
-output "region" {
-  value = "${var.region}"
-}
-
-//output "availability_zones" {
-//  value = "${data.aws_availability_zones.available.names}"
-//}
-
 output "vpc_id" {
   value = "${module.vpc.id}"
 }
@@ -393,8 +370,4 @@ output "kmaster_fqdn" {
 
 output "route53_private_id" {
   value = "${module.network.route53_private_id}"
-}
-
-output "route53_public_id" {
-  value = "${module.network.route53_public_id}"
 }
