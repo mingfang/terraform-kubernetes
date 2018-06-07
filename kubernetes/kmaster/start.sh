@@ -23,18 +23,23 @@ mkdir -p /mnt/data/kmaster/{etcd-data,vault-data,pki-data}
 rm -r ~root/docker-kubernetes-master/{etcd-data,vault-data,pki-data}
 ln -s /mnt/data/kmaster/{etcd-data,vault-data,pki-data} ~root/docker-kubernetes-master
 
-#start
-export REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -c -r .region)
+#setup fan networking
 
+cd ~root/docker-kubernetes-node
+./fan-setup.sh
+
+#start
+
+export REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -c -r .region)
 cd ~root/docker-kubernetes-master
 ./run
 
 #upload kubernetes pki to s3
 
 cd ~root/docker-kubernetes-master/pki-data
-until curl localhost:8080/healthz; do echo "Waiting for kubernetes..."; sleep 10; done
+until curl -s localhost:8080/healthz; do echo "Waiting for kubernetes..."; sleep 10; done
 
-KEYS=$(curl http://169.254.169.254/latest/meta-data/iam/security-credentials/$AWS_PROFILE)
+KEYS=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/$AWS_PROFILE)
 ACCESS_KEY=$(echo $KEYS|jq -r .AccessKeyId)
 SECRET_KEY=$(echo $KEYS|jq -r .SecretAccessKey)
 TOKEN=$(echo $KEYS|jq -r .Token)
@@ -47,7 +52,7 @@ token="x-amz-security-token:$TOKEN"
 encryption="x-amz-server-side-encryption:AES256"
 stringToSign="PUT\n\n$contentType\n$dateFormatted\n$token\n$encryption\n$relativePath"
 signature=`echo -en $stringToSign | openssl sha1 -hmac $SECRET_KEY -binary | base64`
-curl -X PUT -T "$fileName" \
+curl -s -X PUT -T "$fileName" \
 -H "Host: $BUCKET.s3.amazonaws.com" \
 -H "Date: $dateFormatted" \
 -H "Content-Type: $contentType" \
