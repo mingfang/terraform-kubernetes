@@ -78,6 +78,65 @@ module "subnets" {
   nat_gateway_ids = "${var.nat_ids}"
 }
 
+resource "aws_iam_role" "iam_role" {
+  name = "${var.name}-role"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Sid": "",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      }
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_instance_profile" "instance_profile" {
+  name = "${var.name}-profile"
+  role = "${aws_iam_role.iam_role.name}"
+}
+
+resource "aws_iam_role_policy" "role_policy" {
+  name = "${var.name}-policy"
+  role = "${aws_iam_role.iam_role.id}"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "iam:GetInstanceProfile"
+      ],
+      "Resource": [
+        "*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:AttachVolume",
+        "ec2:DetachVolume",
+        "ec2:DescribeVolumes"
+      ],
+      "Resource": [
+        "*"
+      ]
+    }
+  ]
+}
+EOF
+}
+
 module "alb" {
   source                  = "../../vpc/alb"
   enable                  = "${var.alb_enable}"
@@ -125,6 +184,7 @@ resource "aws_launch_configuration" "lc" {
   security_groups             = ["${var.security_group_id}"]
   associate_public_ip_address = false
   user_data                   = "${data.template_file.start.rendered}"
+  iam_instance_profile        = "${aws_iam_instance_profile.instance_profile.name}"
 
   root_block_device {
     volume_size           = "16"
@@ -138,15 +198,16 @@ resource "aws_launch_configuration" "lc" {
 }
 
 resource "aws_autoscaling_group" "asg" {
-  count                = "${var.size > 0 ? 1: 0}"
-  name_prefix          = "${var.name}-"
-  desired_capacity     = "${var.size}"
-  min_size             = "${var.size}"
-  max_size             = "${var.size}"
-  default_cooldown     = 60
-  launch_configuration = "${aws_launch_configuration.lc.name}"
-  vpc_zone_identifier  = ["${module.subnets.ids}"]
-  target_group_arns    = ["${module.alb.target_group_arns}"]
+  count                     = "${var.size > 0 ? 1: 0}"
+  name_prefix               = "${var.name}-"
+  desired_capacity          = "${var.size}"
+  min_size                  = "${var.size}"
+  max_size                  = "${var.size}"
+  default_cooldown          = 60
+  health_check_grace_period = 60
+  launch_configuration      = "${aws_launch_configuration.lc.name}"
+  vpc_zone_identifier       = ["${module.subnets.ids}"]
+  target_group_arns         = ["${module.alb.target_group_arns}"]
 
   tag {
     key                 = "Name"
