@@ -2,10 +2,6 @@
 
 variable "name" {}
 
-variable "public_domain" {
-  default = ""
-}
-
 variable "vpc_id" {}
 
 variable "vpc_cidr" {}
@@ -47,11 +43,6 @@ module "public_subnets" {
 resource "aws_route53_zone" "private" {
   name   = "${var.name}.local"
   vpc_id = "${var.vpc_id}"
-}
-
-resource "aws_route53_zone" "public" {
-  count = "${length(var.public_domain) > 0 ? 1 : 0}"
-  name  = "${var.public_domain}"
 }
 
 resource "aws_security_group" "sg" {
@@ -106,10 +97,6 @@ output "nat_gateway_public_ips" {
 
 output "route53_private_id" {
   value = "${aws_route53_zone.private.id}"
-}
-
-output "route53_public_id" {
-  value = "${join(" ", aws_route53_zone.public.*.id)}"
 }
 
 output "security_group_id" {
