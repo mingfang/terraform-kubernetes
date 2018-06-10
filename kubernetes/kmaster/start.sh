@@ -52,7 +52,7 @@ token="x-amz-security-token:$TOKEN"
 encryption="x-amz-server-side-encryption:AES256"
 stringToSign="PUT\n\n$contentType\n$dateFormatted\n$token\n$encryption\n$relativePath"
 signature=`echo -en $stringToSign | openssl sha1 -hmac $SECRET_KEY -binary | base64`
-curl -s -X PUT -T "$fileName" \
+curl -s -X PUT --location-trusted -T "$fileName" \
 -H "Host: $BUCKET.s3.amazonaws.com" \
 -H "Date: $dateFormatted" \
 -H "Content-Type: $contentType" \
