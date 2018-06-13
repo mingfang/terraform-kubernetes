@@ -34,12 +34,7 @@ export VAULT_ADDR=http://$KMASTER:8200
 AUTH_RESULT=$(curl -X POST $VAULT_ADDR/v1/auth/aws/login -d '{"role": "knode", "pkcs7":"'"$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/pkcs7 | tr -d \\n)"'"}')
 export VAULT_TOKEN=$(echo $AUTH_RESULT | jq -r .auth.client_token)
 
-apt-get update
-apt-get install -y python-pip
-pip install boto3
-wget https://raw.githubusercontent.com/dizzythinks/asg_persistence/master/attach_volume.py
-chmod +x attach_volume.py
-./attach_volume.py --tag Zone --value "$ZONE" --attach_as /dev/xvdf || true
+/attach_volume.py --tag Zone --value "$ZONE" --attach_as /dev/xvdf || true
 
 #start
 cd ~root/docker-kubernetes-node
