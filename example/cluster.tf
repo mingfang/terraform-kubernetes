@@ -27,13 +27,13 @@ resource "aws_route53_zone" "public" {
 }
 
 module "com_cert" {
-  source      = "../vpc/certifcate"
+  source      = "../vpc/certificate"
   domain_name = "*.${var.public_domain}"
   zone_id     = "${aws_route53_zone.public.zone_id}"
 }
 
 module "admin_cert" {
-  source      = "../vpc/certifcate"
+  source      = "../vpc/certificate"
   domain_name = "*.admin.${var.public_domain}"
   zone_id     = "${aws_route53_zone.public.zone_id}"
 }
