@@ -2,6 +2,11 @@ variable "domain_name" {
   default = ""
 }
 
+variable "subject_alternative_names" {
+  default = []
+  type    = "list"
+}
+
 variable "zone_id" {
   default = ""
 }
@@ -11,9 +16,10 @@ variable "enable" {
 }
 
 resource "aws_acm_certificate" "cert" {
-  count             = "${var.enable ? 1 : 0}"
-  domain_name       = "${var.domain_name}"
-  validation_method = "DNS"
+  count                     = "${var.enable ? 1 : 0}"
+  domain_name               = "${var.domain_name}"
+  subject_alternative_names = ["${var.subject_alternative_names}"]
+  validation_method         = "DNS"
 }
 
 resource "aws_route53_record" "cert_record" {
