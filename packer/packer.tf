@@ -1,3 +1,9 @@
+variable "ami_name" {}
+
+variable "access_key" {}
+
+variable "secret_key" {}
+
 variable "region" {}
 
 variable "az" {}
@@ -98,19 +104,29 @@ resource "aws_security_group" "sg" {
   }
 }
 
+resource "null_resource" "packer" {
+  triggers {
+    ami_name = "${var.ami_name}"
+  }
+
+  provisioner "local-exec" {
+    command = "packer build -var \"region=${var.region}\" -var \"vpc_id=${aws_vpc.vpc.id}\" -var \"subnet_id=${aws_subnet.subnet.id}\" -var \"ami_name=${var.ami_name}\" -var \"access_key=${var.access_key}\" -var \"secret_key=${var.secret_key}\" ${path.module}/kubernetes-ami.json"
+  }
+}
+
+data "aws_ami" "ami" {
+  most_recent = true
+  owners      = ["self"]
+
+  filter {
+    name   = "name"
+    values = ["${var.ami_name}"]
+  }
+
+  depends_on = ["null_resource.packer"]
+}
+
 #Output
-
-resource "local_file" "output" {
-  filename = "${path.cwd}/packer_vars.json"
-
-  content = <<EOF
-{
-  "packer_region": "${var.region}",
-  "packer_vpc_id": "${aws_vpc.vpc.id}",
-  "packer_subnet_id": "${aws_subnet.subnet.id}"
-}
-EOF
-}
 
 output "region" {
   value = "${var.region}"
@@ -122,4 +138,8 @@ output "vpc_id" {
 
 output "subnet_id" {
   value = "${aws_subnet.subnet.id}"
+}
+
+output "ami_id" {
+  value = "${data.aws_ami.ami.id}"
 }

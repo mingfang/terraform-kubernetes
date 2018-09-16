@@ -2,23 +2,24 @@
   "variables": {
     "access_key": "",
     "secret_key": "",
-    "packer_region": "",
-    "packer_vpc_id": "",
-    "packer_subnet_id": ""
+    "region": "",
+    "vpc_id": "",
+    "subnet_id": "",
+    "ami_name": ""
   },
   "builders": [
     {
       "access_key": "{{user `access_key`}}",
       "secret_key": "{{user `secret_key`}}",
-      "region": "{{user `packer_region`}}",
-      "vpc_id": "{{user `packer_vpc_id`}}",
-      "subnet_id": "{{user `packer_subnet_id`}}",
-      "ami_name": "kubernetes",
+      "region": "{{user `region`}}",
+      "vpc_id": "{{user `vpc_id`}}",
+      "subnet_id": "{{user `subnet_id`}}",
+      "ami_name": "{{user `ami_name`}}",
       "force_deregister": "true",
       "force_delete_snapshot": "true",
       "associate_public_ip_address": "true",
       "type": "amazon-ebs",
-      "instance_type": "t2.micro",
+      "instance_type": "t3.micro",
       "ssh_username": "ubuntu",
       "source_ami_filter": {
         "filters": {
