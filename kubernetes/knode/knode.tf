@@ -66,6 +66,8 @@ variable "certificate_arn" {
   default = ""
 }
 
+variable volume_size {}
+
 # Resources
 
 module "subnets" {
@@ -187,7 +189,7 @@ resource "aws_launch_configuration" "lc" {
   iam_instance_profile        = "${aws_iam_instance_profile.instance_profile.name}"
 
   root_block_device {
-    volume_size           = "16"
+    volume_size           = "${var.volume_size}"
     volume_type           = "gp2"
     delete_on_termination = "true"
   }

@@ -24,48 +24,88 @@ variable "com_size" {
   default = 1
 }
 
+variable com_instance_type {
+  default = "t3.medium"
+}
+
+variable "com_volume_size" {
+  default = "16"
+}
+
 variable "green_size" {
   default = 1
+}
+
+variable green_instance_type {
+  default = "t3.medium"
+}
+
+variable "green_subnets" {
+  type    = "list"
+  default = ["10.248.31.0/24", "10.248.32.0/24", "10.248.33.0/24"]
+}
+
+variable "green_volume_size" {
+  default = "16"
 }
 
 variable "net_size" {
   default = 1
 }
 
+variable net_instance_type {
+  default = "t3.medium"
+}
+
+variable "net_subnets" {
+  type    = "list"
+  default = ["10.248.41.0/24", "10.248.42.0/24", "10.248.43.0/24"]
+}
+
+variable "net_volume_size" {
+  default = "16"
+}
+
 variable "db_size" {
   default = 1
+}
+
+variable db_instance_type {
+  default = "t3.medium"
+}
+
+variable "db_subnets" {
+  type    = "list"
+  default = ["10.248.61.0/24", "10.248.62.0/24", "10.248.63.0/24"]
+}
+
+variable "db_volume_size" {
+  default = "16"
 }
 
 variable "admin_size" {
   default = 1
 }
 
-variable com_instance_type {
-  default = "t2.medium"
-}
-
-variable green_instance_type {
-  default = "t2.medium"
-}
-
-variable net_instance_type {
-  default = "t2.medium"
-}
-
-variable db_instance_type {
-  default = "t2.medium"
-}
-
 variable admin_instance_type {
-  default = "t2.medium"
+  default = "t3.medium"
+}
+
+variable "admin_subnets" {
+  type    = "list"
+  default = ["10.248.51.0/24", "10.248.52.0/24", "10.248.53.0/24"]
+}
+
+variable "admin_volume_size" {
+  default = "16"
 }
 
 variable kmaster_instance_type {
-  default = "t2.medium"
+  default = "t3.medium"
 }
 
 variable bastion_instance_type {
-  default = "t2.micro"
+  default = "t3.nano"
 }
 
 variable "vpc_cidr" {
@@ -80,26 +120,6 @@ variable "public_subnets" {
 variable "com_subnets" {
   type    = "list"
   default = ["10.248.21.0/24", "10.248.22.0/24", "10.248.23.0/24"]
-}
-
-variable "green_subnets" {
-  type    = "list"
-  default = ["10.248.31.0/24", "10.248.32.0/24", "10.248.33.0/24"]
-}
-
-variable "net_subnets" {
-  type    = "list"
-  default = ["10.248.41.0/24", "10.248.42.0/24", "10.248.43.0/24"]
-}
-
-variable "admin_subnets" {
-  type    = "list"
-  default = ["10.248.51.0/24", "10.248.52.0/24", "10.248.53.0/24"]
-}
-
-variable "db_subnets" {
-  type    = "list"
-  default = ["10.248.61.0/24", "10.248.62.0/24", "10.248.63.0/24"]
 }
 
 variable "efs_subnets" {
@@ -124,6 +144,8 @@ variable "admin_certificate_arn" {
 variable "com_certificate_arn" {
   default = ""
 }
+
+variable "ami_id" {}
 
 # Resources
 
@@ -154,21 +176,11 @@ module "network" {
   public_subnets = "${var.public_subnets}"
 }
 
-data "aws_ami" "kubernetes" {
-  most_recent = true
-  owners      = ["self"]
-
-  filter {
-    name   = "name"
-    values = ["kubernetes"]
-  }
-}
-
 module "bastion" {
   source          = "../vpc/bastion"
   name            = "${var.name}-bastion"
   instance_type   = "${var.bastion_instance_type}"
-  image_id        = "${data.aws_ami.kubernetes.id}"
+  image_id        = "${var.ami_id}"
   key_name        = "${aws_key_pair.cluster_key_pair.key_name}"
   vpc_id          = "${module.vpc.id}"
   vpc_cidr        = "${var.vpc_cidr}"
@@ -189,7 +201,7 @@ module "kmaster" {
   alb_route53_zone_id_private = "${module.network.route53_private_id}"
   alb_route53_zone_id_public  = "${var.route53_zone_id}"
   alb_subnet_ids              = "${module.network.public_subnet_ids}"
-  image_id                    = "${data.aws_ami.kubernetes.id}"
+  image_id                    = "${var.ami_id}"
   efs_dns_name                = "${module.efs.fqdn}"
 }
 
@@ -206,8 +218,9 @@ module "green_zone" {
   subnets           = "${var.green_subnets}"
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
-  image_id          = "${data.aws_ami.kubernetes.id}"
+  image_id          = "${var.ami_id}"
   kmaster           = "${module.kmaster.private_fqdn}"
+  volume_size       = "${var.green_volume_size}"
 }
 
 module "net_zone" {
@@ -223,8 +236,9 @@ module "net_zone" {
   nat_ids           = "${module.network.nat_gateway_ids}"
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
-  image_id          = "${data.aws_ami.kubernetes.id}"
+  image_id          = "${var.ami_id}"
   kmaster           = "${module.kmaster.private_fqdn}"
+  volume_size       = "${var.net_volume_size}"
 }
 
 module "db_zone" {
@@ -240,8 +254,9 @@ module "db_zone" {
   nat_ids           = "${module.network.nat_gateway_ids}"
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
-  image_id          = "${data.aws_ami.kubernetes.id}"
+  image_id          = "${var.ami_id}"
   kmaster           = "${module.kmaster.private_fqdn}"
+  volume_size       = "${var.db_volume_size}"
 }
 
 module "admin_zone" {
@@ -257,9 +272,10 @@ module "admin_zone" {
   nat_ids           = "${module.network.nat_gateway_ids}"
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
-  image_id          = "${data.aws_ami.kubernetes.id}"
+  image_id          = "${var.ami_id}"
   kmaster           = "${module.kmaster.private_fqdn}"
   certificate_arn   = "${var.admin_certificate_arn}"
+  volume_size       = "${var.admin_volume_size}"
 
   alb_enable                  = "${var.admin_size > 0}"
   alb_internal                = false
@@ -283,9 +299,10 @@ module "com_zone" {
   nat_ids           = "${module.network.nat_gateway_ids}"
   key_name          = "${aws_key_pair.cluster_key_pair.key_name}"
   security_group_id = "${module.network.security_group_id}"
-  image_id          = "${data.aws_ami.kubernetes.id}"
+  image_id          = "${var.ami_id}"
   kmaster           = "${module.kmaster.private_fqdn}"
   certificate_arn   = "${var.com_certificate_arn}"
+  volume_size       = "${var.com_volume_size}"
 
   alb_enable                  = "${var.com_size > 0}"
   alb_internal                = false
