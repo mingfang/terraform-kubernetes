@@ -59,6 +59,10 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids      = ["${aws_security_group.bastion.id}"]
   associate_public_ip_address = true
 
+  credit_specification {
+    cpu_credits = "standard"
+  }
+
   root_block_device {
     volume_size           = "8"
     volume_type           = "gp2"
