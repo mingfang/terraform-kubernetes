@@ -184,9 +184,10 @@ resource "aws_launch_configuration" "lc" {
   image_id                    = "${var.image_id}"
   key_name                    = "${var.key_name}"
   security_groups             = ["${var.security_group_id}"]
-  associate_public_ip_address = false
   user_data                   = "${data.template_file.start.rendered}"
   iam_instance_profile        = "${aws_iam_instance_profile.instance_profile.name}"
+  associate_public_ip_address = false
+  ebs_optimized               = true
 
   root_block_device {
     volume_size           = "${var.volume_size}"
