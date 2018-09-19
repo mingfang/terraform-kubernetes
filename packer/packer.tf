@@ -10,9 +10,13 @@ variable "az" {}
 
 variable "name" {}
 
-variable "vpc_cidr" {}
+variable "vpc_cidr" {
+  default = "10.0.0.0/24"
+}
 
-variable "subnet_cidr" {}
+variable "subnet_cidr" {
+  default = "10.0.0.0/24"
+}
 
 resource "aws_vpc" "vpc" {
   cidr_block           = "${var.vpc_cidr}"
@@ -114,18 +118,6 @@ resource "null_resource" "packer" {
   }
 }
 
-data "aws_ami" "ami" {
-  most_recent = true
-  owners      = ["self"]
-
-  filter {
-    name   = "name"
-    values = ["${var.ami_name}"]
-  }
-
-  depends_on = ["null_resource.packer"]
-}
-
 #Output
 
 output "region" {
@@ -138,8 +130,4 @@ output "vpc_id" {
 
 output "subnet_id" {
   value = "${aws_subnet.subnet.id}"
-}
-
-output "ami_id" {
-  value = "${data.aws_ami.ami.id}"
 }
