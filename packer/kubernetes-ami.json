@@ -15,6 +15,9 @@
       "vpc_id": "{{user `vpc_id`}}",
       "subnet_id": "{{user `subnet_id`}}",
       "ami_name": "{{user `ami_name`}}",
+      "tags": {
+        "Name": "{{user `ami_name`}}"
+      },
       "force_deregister": "true",
       "force_delete_snapshot": "true",
       "associate_public_ip_address": "true",
@@ -24,7 +27,7 @@
       "source_ami_filter": {
         "filters": {
           "virtualization-type": "hvm",
-          "name": "*ubuntu-xenial-16.04-amd64-server-*",
+          "name": "*ubuntu-bionic-18.04-amd64-server-*",
           "root-device-type": "ebs"
         },
         "owners": [
