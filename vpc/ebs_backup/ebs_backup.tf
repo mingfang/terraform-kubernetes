@@ -15,55 +15,55 @@ variable "default_retention" {
 resource "aws_iam_role" "ebs_backup_role" {
   name = "${var.name}-ebs-backup-role"
 
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
+  assume_role_policy = <<-EOF
     {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": "sts:AssumeRole",
+          "Principal": {
+            "Service": "lambda.amazonaws.com"
+          },
+          "Effect": "Allow",
+          "Sid": ""
+        }
+      ]
     }
-  ]
-}
-EOF
+    EOF
 }
 
 resource "aws_iam_role_policy" "ebs_backup_policy" {
   name = "${var.name}-ebs_backup-policy"
   role = "${aws_iam_role.ebs_backup_role.id}"
 
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": ["logs:*"],
-            "Resource": "arn:aws:logs:*:*:*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "ec2:Describe*",
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2:CreateSnapshot",
-                "ec2:DeleteSnapshot",
-                "ec2:CreateTags",
-                "ec2:ModifySnapshotAttribute",
-                "ec2:ResetSnapshotAttribute"
-            ],
-            "Resource": ["*"]
-        }
-    ]
-}
-EOF
+  policy = <<-EOF
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": ["logs:*"],
+                "Resource": "arn:aws:logs:*:*:*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": "ec2:Describe*",
+                "Resource": "*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "ec2:CreateSnapshot",
+                    "ec2:DeleteSnapshot",
+                    "ec2:CreateTags",
+                    "ec2:ModifySnapshotAttribute",
+                    "ec2:ResetSnapshotAttribute"
+                ],
+                "Resource": ["*"]
+            }
+        ]
+    }
+    EOF
 }
 
 // Backup Zip
@@ -71,13 +71,13 @@ EOF
 data "archive_file" "ebs_backup_zip" {
   type        = "zip"
   source_file = "${path.module}/ebs_backup.py"
-  output_path = "${path.module}/${var.name}_ebs_backup.zip"
+  output_path = "/tmp/${var.name}_ebs_backup.zip"
 }
 
 // Backup function
 
 resource "aws_lambda_function" "ebs_backup" {
-  filename         = "${path.module}/${var.name}_ebs_backup.zip"
+  filename         = "${data.archive_file.ebs_backup_zip.output_path}"
   function_name    = "${var.name}_ebs_backup"
   description      = "${var.name} EBS Backup"
   role             = "${aws_iam_role.ebs_backup_role.arn}"
@@ -121,7 +121,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_ebs_backup" {
 // Cleanup function
 
 resource "aws_lambda_function" "ebs_backup_delete" {
-  filename         = "${path.module}/${var.name}_ebs_backup.zip"
+  filename         = "${data.archive_file.ebs_backup_zip.output_path}"
   function_name    = "${var.name}_ebs_backup_delete"
   description      = "${var.name} Delete EBS Backups"
   role             = "${aws_iam_role.ebs_backup_role.arn}"
