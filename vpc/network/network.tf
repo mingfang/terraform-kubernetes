@@ -1,25 +1,28 @@
 # Variables
 
-variable "name" {}
+variable "name" {
+}
 
-variable "vpc_id" {}
+variable "vpc_id" {
+}
 
-variable "vpc_cidr" {}
+variable "vpc_cidr" {
+}
 
 variable "azs" {
-  type = "list"
+  type = list(string)
 }
 
 variable "public_subnets" {
-  type = "list"
+  type = list(string)
 }
 
 # Resources
 
 resource "aws_internet_gateway" "gw" {
-  vpc_id = "${var.vpc_id}"
+  vpc_id = var.vpc_id
 
-  tags {
+  tags = {
     Name = "${var.name}-gw"
   }
 }
@@ -27,33 +30,33 @@ resource "aws_internet_gateway" "gw" {
 module "nats" {
   source            = "./nat"
   name              = "${var.name}-nat"
-  azs               = "${var.azs}"
-  public_subnet_ids = "${module.public_subnets.ids}"
+  azs               = var.azs
+  public_subnet_ids = module.public_subnets.ids
 }
 
 module "public_subnets" {
   source              = "./public_subnet"
   name                = "${var.name}-public"
-  vpc_id              = "${var.vpc_id}"
-  cidrs               = "${var.public_subnets}"
-  azs                 = "${var.azs}"
-  internet_gateway_id = "${aws_internet_gateway.gw.id}"
+  vpc_id              = var.vpc_id
+  cidrs               = var.public_subnets
+  azs                 = var.azs
+  internet_gateway_id = aws_internet_gateway.gw.id
 }
 
 resource "aws_route53_zone" "private" {
   name   = "${var.name}.local"
-  vpc_id = "${var.vpc_id}"
+  vpc_id = var.vpc_id
 }
 
 resource "aws_security_group" "sg" {
   name   = "${var.name}-sg"
-  vpc_id = "${var.vpc_id}"
+  vpc_id = var.vpc_id
 
   ingress {
     protocol    = -1
     from_port   = 0
     to_port     = 0
-    cidr_blocks = ["${var.vpc_cidr}"]
+    cidr_blocks = [var.vpc_cidr]
   }
 
   ingress {
@@ -72,7 +75,7 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags {
+  tags = {
     Name = "${var.name}-sg"
   }
 
@@ -84,21 +87,22 @@ resource "aws_security_group" "sg" {
 # Output
 
 output "public_subnet_ids" {
-  value = "${module.public_subnets.ids}"
+  value = module.public_subnets.ids
 }
 
 output "nat_gateway_ids" {
-  value = "${module.nats.ids}"
+  value = module.nats.ids
 }
 
 output "nat_gateway_public_ips" {
-  value = "${module.nats.public_ips}"
+  value = module.nats.public_ips
 }
 
 output "route53_private_id" {
-  value = "${aws_route53_zone.private.id}"
+  value = aws_route53_zone.private.id
 }
 
 output "security_group_id" {
-  value = "${aws_security_group.sg.id}"
+  value = aws_security_group.sg.id
 }
+

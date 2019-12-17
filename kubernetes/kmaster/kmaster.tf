@@ -1,28 +1,34 @@
 # Variables
 
-variable "name" {}
+variable "name" {
+}
 
-variable "vpc_id" {}
+variable "vpc_id" {
+}
 
-variable "vpc_cidr" {}
+variable "vpc_cidr" {
+}
 
-variable "key_name" {}
+variable "key_name" {
+}
 
 variable "azs" {
-  type = "list"
+  type = list(string)
 }
 
 variable "subnets" {
-  type = "list"
+  type = list(string)
 }
 
 variable "nat_ids" {
-  type = "list"
+  type = list(string)
 }
 
-variable "instance_type" {}
+variable "instance_type" {
+}
 
-variable "image_id" {}
+variable "image_id" {
+}
 
 variable "efs_dns_name" {
   default = ""
@@ -37,7 +43,7 @@ variable "alb_route53_zone_id_public" {
 }
 
 variable "alb_subnet_ids" {
-  type    = "list"
+  type    = list(string)
   default = []
 }
 
@@ -45,11 +51,11 @@ variable "alb_subnet_ids" {
 
 module "subnets" {
   source          = "../../vpc/network/private_subnet"
-  name            = "${var.name}"
-  cidrs           = "${var.subnets}"
-  vpc_id          = "${var.vpc_id}"
-  azs             = "${var.azs}"
-  nat_gateway_ids = "${var.nat_ids}"
+  name            = var.name
+  cidrs           = var.subnets
+  vpc_id          = var.vpc_id
+  azs             = var.azs
+  nat_gateway_ids = var.nat_ids
 }
 
 resource "aws_iam_role" "iam_role" {
@@ -70,16 +76,17 @@ resource "aws_iam_role" "iam_role" {
   ]
 }
 EOF
+
 }
 
 resource "aws_iam_instance_profile" "instance_profile" {
   name = "${var.name}-profile"
-  role = "${aws_iam_role.iam_role.name}"
+  role = aws_iam_role.iam_role.name
 }
 
 resource "aws_iam_role_policy" "role_policy" {
   name = "${var.name}-policy"
-  role = "${aws_iam_role.iam_role.id}"
+  role = aws_iam_role.iam_role.id
 
   policy = <<EOF
 {
@@ -118,16 +125,17 @@ resource "aws_iam_role_policy" "role_policy" {
   ]
 }
 EOF
+
 }
 
 resource "aws_elb" "public" {
   name                        = "${var.name}-public-elb"
-  subnets                     = ["${var.alb_subnet_ids}"]
+  subnets                     = var.alb_subnet_ids
   cross_zone_load_balancing   = true
   idle_timeout                = 500
   connection_draining         = true
   connection_draining_timeout = 10
-  security_groups             = ["${aws_security_group.elb_sg.id}"]
+  security_groups             = [aws_security_group.elb_sg.id]
 
   listener {
     instance_port     = 6443
@@ -146,14 +154,14 @@ resource "aws_elb" "public" {
 }
 
 resource "aws_elb" "private" {
-  name                        = "${var.name}-private-elb"
-  subnets                     = ["${module.subnets.ids}"]
+  name = "${var.name}-private-elb"
+  subnets                     = [module.subnets.ids]
   internal                    = true
   cross_zone_load_balancing   = true
   idle_timeout                = 500
   connection_draining         = true
   connection_draining_timeout = 10
-  security_groups             = ["${aws_security_group.elb_sg.id}"]
+  security_groups             = [aws_security_group.elb_sg.id]
 
   listener {
     instance_port     = 6443
@@ -187,7 +195,7 @@ resource "aws_elb" "private" {
 
 resource "aws_security_group" "elb_sg" {
   name   = "${var.name}-elb-sg"
-  vpc_id = "${var.vpc_id}"
+  vpc_id = var.vpc_id
 
   ingress {
     from_port = 0
@@ -209,7 +217,7 @@ resource "aws_security_group" "elb_sg" {
     ]
   }
 
-  tags {
+  tags = {
     Name = "${var.name}-elb-sg"
   }
 
@@ -219,25 +227,25 @@ resource "aws_security_group" "elb_sg" {
 }
 
 resource "aws_route53_record" "private" {
-  zone_id = "${var.alb_route53_zone_id_private}"
+  zone_id = var.alb_route53_zone_id_private
   name    = "kmaster"
   type    = "A"
 
   alias {
-    name                   = "${aws_elb.private.dns_name}"
-    zone_id                = "${aws_elb.private.zone_id}"
+    name                   = aws_elb.private.dns_name
+    zone_id                = aws_elb.private.zone_id
     evaluate_target_health = true
   }
 }
 
 resource "aws_route53_record" "public" {
   name    = "kmaster"
-  zone_id = "${var.alb_route53_zone_id_public}"
+  zone_id = var.alb_route53_zone_id_public
   type    = "A"
 
   alias {
-    name                   = "${aws_elb.public.dns_name}"
-    zone_id                = "${aws_elb.public.zone_id}"
+    name                   = aws_elb.public.dns_name
+    zone_id                = aws_elb.public.zone_id
     evaluate_target_health = true
   }
 }
@@ -249,13 +257,13 @@ resource "aws_s3_bucket" "keys" {
 }
 
 data "template_file" "start" {
-  template = "${file("${path.module}/start.sh")}"
+  template = file("${path.module}/start.sh")
 
-  vars {
-    vpc_id            = "${var.vpc_id}"
-    efs_dns_name      = "${var.efs_dns_name}"
-    bucket            = "${aws_s3_bucket.keys.id}"
-    iam_role          = "${aws_iam_role.iam_role.id}"
+  vars = {
+    vpc_id            = var.vpc_id
+    efs_dns_name      = var.efs_dns_name
+    bucket            = aws_s3_bucket.keys.id
+    iam_role          = aws_iam_role.iam_role.id
     kubernetes_master = "https://${aws_route53_record.public.fqdn}:6443"
     alt_names         = "${aws_route53_record.private.fqdn},${aws_route53_record.public.fqdn},${aws_elb.public.dns_name}"
   }
@@ -263,13 +271,13 @@ data "template_file" "start" {
 
 resource "aws_launch_configuration" "lc" {
   name_prefix                 = "${var.name}-"
-  instance_type               = "${var.instance_type}"
-  image_id                    = "${var.image_id}"
-  key_name                    = "${var.key_name}"
-  security_groups             = ["${aws_security_group.sg.id}"]
+  instance_type               = var.instance_type
+  image_id                    = var.image_id
+  key_name                    = var.key_name
+  security_groups             = [aws_security_group.sg.id]
   associate_public_ip_address = false
-  user_data                   = "${data.template_file.start.rendered}"
-  iam_instance_profile        = "${aws_iam_instance_profile.instance_profile.name}"
+  user_data                   = data.template_file.start.rendered
+  iam_instance_profile        = aws_iam_instance_profile.instance_profile.name
 
   root_block_device {
     volume_size           = "8"
@@ -289,29 +297,29 @@ resource "aws_autoscaling_group" "asg" {
   max_size                  = 1
   default_cooldown          = 60
   health_check_grace_period = 60
-  launch_configuration      = "${aws_launch_configuration.lc.name}"
-  vpc_zone_identifier       = ["${module.subnets.ids}"]
-  load_balancers            = ["${aws_elb.private.id}", "${aws_elb.public.id}"]
+  launch_configuration      = aws_launch_configuration.lc.name
+  vpc_zone_identifier = [module.subnets.ids]
+  load_balancers      = [aws_elb.private.id, aws_elb.public.id]
 
   tag {
     key                 = "Name"
-    value               = "${var.name}"
+    value               = var.name
     propagate_at_launch = true
   }
 
-  depends_on = ["aws_s3_bucket.keys"]
+  depends_on = [aws_s3_bucket.keys]
 }
 
 resource "aws_security_group" "sg" {
-  name   = "${var.name}"
-  vpc_id = "${var.vpc_id}"
+  name   = var.name
+  vpc_id = var.vpc_id
 
   //ETCD
   ingress {
     protocol    = "tcp"
     from_port   = 4001
     to_port     = 4001
-    cidr_blocks = ["${var.vpc_cidr}"]
+    cidr_blocks = [var.vpc_cidr]
   }
 
   //KMASTER
@@ -319,7 +327,7 @@ resource "aws_security_group" "sg" {
     protocol    = "tcp"
     from_port   = 6443
     to_port     = 6443
-    cidr_blocks = ["${var.vpc_cidr}"]
+    cidr_blocks = [var.vpc_cidr]
   }
 
   //VAULT
@@ -327,7 +335,7 @@ resource "aws_security_group" "sg" {
     protocol    = "tcp"
     from_port   = 8200
     to_port     = 8200
-    cidr_blocks = ["${var.vpc_cidr}"]
+    cidr_blocks = [var.vpc_cidr]
   }
 
   //SSH
@@ -345,7 +353,7 @@ resource "aws_security_group" "sg" {
     protocol    = "tcp"
     from_port   = 2049
     to_port     = 2049
-    cidr_blocks = ["${var.vpc_cidr}"]
+    cidr_blocks = [var.vpc_cidr]
   }
 
   egress {
@@ -355,25 +363,26 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags {
-    Name = "${var.name}"
+  tags = {
+    Name = var.name
   }
 }
 
 # Outputs
 
 output "subnet_ids" {
-  value = "${module.subnets.ids}"
+  value = module.subnets.ids
 }
 
 output "security_group_id" {
-  value = "${aws_security_group.sg.id}"
+  value = aws_security_group.sg.id
 }
 
 output "private_fqdn" {
-  value = "${aws_route53_record.private.fqdn}"
+  value = aws_route53_record.private.fqdn
 }
 
 output "public_fqdn" {
-  value = "${aws_route53_record.public.fqdn}"
+  value = aws_route53_record.public.fqdn
 }
+

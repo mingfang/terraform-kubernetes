@@ -7,44 +7,45 @@ variable "name" {
 }
 
 variable "azs" {
-  type = "list"
+  type = list(string)
 }
 
 variable "public_subnet_ids" {
-  type = "list"
+  type = list(string)
 }
 
 resource "aws_eip" "nat" {
-  count = "${length(var.azs)}"
+  count = length(var.azs)
   vpc   = true
 
   lifecycle {
     create_before_destroy = true
   }
 
-  tags {
+  tags = {
     Name = "${var.name}-eip"
   }
 }
 
 resource "aws_nat_gateway" "nat" {
-  count         = "${length(var.azs)}"
-  allocation_id = "${element(aws_eip.nat.*.id, count.index)}"
-  subnet_id     = "${element(var.public_subnet_ids, count.index)}"
+  count         = length(var.azs)
+  allocation_id = element(aws_eip.nat.*.id, count.index)
+  subnet_id     = element(var.public_subnet_ids, count.index)
 
   lifecycle {
     create_before_destroy = true
   }
 
-  tags {
-    Name = "${var.name}"
+  tags = {
+    Name = var.name
   }
 }
 
 output "ids" {
-  value = ["${aws_nat_gateway.nat.*.id}"]
+  value = [aws_nat_gateway.nat.*.id]
 }
 
 output "public_ips" {
-  value = ["${aws_nat_gateway.nat.*.public_ip}"]
+  value = [aws_nat_gateway.nat.*.public_ip]
 }
+

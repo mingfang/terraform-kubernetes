@@ -1,19 +1,21 @@
 # Variables
 
-variable "name" {}
+variable "name" {
+}
 
-variable "vpc_id" {}
+variable "vpc_id" {
+}
 
 variable "cidrs" {
-  type = "list"
+  type = list(string)
 }
 
 variable "azs" {
-  type = "list"
+  type = list(string)
 }
 
 variable "nat_gateway_ids" {
-  type = "list"
+  type = list(string)
 }
 
 variable "nat_support" {
@@ -27,12 +29,12 @@ variable "enable" {
 # Resources
 
 resource "aws_subnet" "subnets" {
-  count             = "${var.enable ? length(var.azs) : 0}"
-  vpc_id            = "${var.vpc_id}"
-  cidr_block        = "${element(var.cidrs, count.index)}"
-  availability_zone = "${element(var.azs, count.index)}"
+  count             = var.enable ? length(var.azs) : 0
+  vpc_id            = var.vpc_id
+  cidr_block        = element(var.cidrs, count.index)
+  availability_zone = element(var.azs, count.index)
 
-  tags {
+  tags = {
     Name = "${var.name}.${element(var.azs, count.index)}"
   }
 
@@ -42,15 +44,15 @@ resource "aws_subnet" "subnets" {
 }
 
 resource "aws_route_table" "route_tables" {
-  count  = "${var.enable && var.nat_support ? length(var.azs) : 0}"
-  vpc_id = "${var.vpc_id}"
+  count  = var.enable && var.nat_support ? length(var.azs) : 0
+  vpc_id = var.vpc_id
 
   route {
-    nat_gateway_id = "${element(var.nat_gateway_ids, count.index)}"
+    nat_gateway_id = element(var.nat_gateway_ids, count.index)
     cidr_block     = "0.0.0.0/0"
   }
 
-  tags {
+  tags = {
     Name = "${var.name}.${element(var.azs, count.index)}"
   }
 
@@ -60,9 +62,9 @@ resource "aws_route_table" "route_tables" {
 }
 
 resource "aws_route_table_association" "route_association" {
-  count          = "${var.enable && var.nat_support ? length(var.azs) : 0}"
-  subnet_id      = "${element(aws_subnet.subnets.*.id, count.index)}"
-  route_table_id = "${element(aws_route_table.route_tables.*.id, count.index)}"
+  count          = var.enable && var.nat_support ? length(var.azs) : 0
+  subnet_id      = element(aws_subnet.subnets.*.id, count.index)
+  route_table_id = element(aws_route_table.route_tables.*.id, count.index)
 
   lifecycle {
     create_before_destroy = true
@@ -72,5 +74,6 @@ resource "aws_route_table_association" "route_association" {
 # Output
 
 output "ids" {
-  value = ["${aws_subnet.subnets.*.id}"]
+  value = [aws_subnet.subnets.*.id]
 }
+

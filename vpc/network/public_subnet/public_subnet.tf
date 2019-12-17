@@ -1,15 +1,17 @@
 # Variables
 
-variable "name" {}
+variable "name" {
+}
 
-variable "vpc_id" {}
+variable "vpc_id" {
+}
 
 variable "cidrs" {
-  type = "list"
+  type = list(string)
 }
 
 variable "azs" {
-  type = "list"
+  type = list(string)
 }
 
 variable "internet_gateway_id" {
@@ -19,13 +21,13 @@ variable "internet_gateway_id" {
 # Resources
 
 resource "aws_subnet" "subnets" {
-  count                   = "${length(var.azs)}"
-  vpc_id                  = "${var.vpc_id}"
-  cidr_block              = "${element(var.cidrs, count.index)}"
-  availability_zone       = "${element(var.azs, count.index)}"
+  count                   = length(var.azs)
+  vpc_id                  = var.vpc_id
+  cidr_block              = element(var.cidrs, count.index)
+  availability_zone       = element(var.azs, count.index)
   map_public_ip_on_launch = true
 
-  tags {
+  tags = {
     Name = "${var.name}.${element(var.azs, count.index)}"
   }
 
@@ -35,15 +37,15 @@ resource "aws_subnet" "subnets" {
 }
 
 resource "aws_route_table" "route_table" {
-  vpc_id = "${var.vpc_id}"
+  vpc_id = var.vpc_id
 
   route {
-    gateway_id = "${var.internet_gateway_id}"
+    gateway_id = var.internet_gateway_id
     cidr_block = "0.0.0.0/0"
   }
 
-  tags {
-    Name = "${var.name}"
+  tags = {
+    Name = var.name
   }
 
   lifecycle {
@@ -52,9 +54,9 @@ resource "aws_route_table" "route_table" {
 }
 
 resource "aws_route_table_association" "route_association" {
-  count          = "${length(var.azs)}"
-  subnet_id      = "${element(aws_subnet.subnets.*.id, count.index)}"
-  route_table_id = "${aws_route_table.route_table.id}"
+  count          = length(var.azs)
+  subnet_id      = element(aws_subnet.subnets.*.id, count.index)
+  route_table_id = aws_route_table.route_table.id
 
   lifecycle {
     create_before_destroy = true
@@ -64,5 +66,6 @@ resource "aws_route_table_association" "route_association" {
 # Output
 
 output "ids" {
-  value = ["${aws_subnet.subnets.*.id}"]
+  value = [aws_subnet.subnets.*.id]
 }
+

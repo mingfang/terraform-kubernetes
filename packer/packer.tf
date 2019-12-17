@@ -1,14 +1,20 @@
-variable "ami_name" {}
+variable "ami_name" {
+}
 
-variable "access_key" {}
+variable "access_key" {
+}
 
-variable "secret_key" {}
+variable "secret_key" {
+}
 
-variable "region" {}
+variable "region" {
+}
 
-variable "az" {}
+variable "az" {
+}
 
-variable "name" {}
+variable "name" {
+}
 
 variable "vpc_cidr" {
   default = "10.0.0.0/24"
@@ -19,12 +25,12 @@ variable "subnet_cidr" {
 }
 
 resource "aws_vpc" "vpc" {
-  cidr_block           = "${var.vpc_cidr}"
+  cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
 
-  tags {
-    Name = "${var.name}"
+  tags = {
+    Name = var.name
   }
 
   lifecycle {
@@ -33,20 +39,20 @@ resource "aws_vpc" "vpc" {
 }
 
 resource "aws_internet_gateway" "gw" {
-  vpc_id = "${aws_vpc.vpc.id}"
+  vpc_id = aws_vpc.vpc.id
 
-  tags {
+  tags = {
     Name = "${var.name}-gw"
   }
 }
 
 resource "aws_subnet" "subnet" {
-  vpc_id                  = "${aws_vpc.vpc.id}"
-  cidr_block              = "${var.subnet_cidr}"
-  availability_zone       = "${var.az}"
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = var.subnet_cidr
+  availability_zone       = var.az
   map_public_ip_on_launch = true
 
-  tags {
+  tags = {
     Name = "${var.name}-${var.az}"
   }
 
@@ -56,15 +62,15 @@ resource "aws_subnet" "subnet" {
 }
 
 resource "aws_route_table" "route_table" {
-  vpc_id = "${aws_vpc.vpc.id}"
+  vpc_id = aws_vpc.vpc.id
 
   route {
-    gateway_id = "${aws_internet_gateway.gw.id}"
+    gateway_id = aws_internet_gateway.gw.id
     cidr_block = "0.0.0.0/0"
   }
 
-  tags {
-    Name = "${var.name}"
+  tags = {
+    Name = var.name
   }
 
   lifecycle {
@@ -73,8 +79,8 @@ resource "aws_route_table" "route_table" {
 }
 
 resource "aws_route_table_association" "route_association" {
-  subnet_id      = "${aws_subnet.subnet.id}"
-  route_table_id = "${aws_route_table.route_table.id}"
+  subnet_id      = aws_subnet.subnet.id
+  route_table_id = aws_route_table.route_table.id
 
   lifecycle {
     create_before_destroy = true
@@ -83,7 +89,7 @@ resource "aws_route_table_association" "route_association" {
 
 resource "aws_security_group" "sg" {
   name   = "${var.name}-sg"
-  vpc_id = "${aws_vpc.vpc.id}"
+  vpc_id = aws_vpc.vpc.id
 
   ingress {
     protocol    = "tcp"
@@ -96,11 +102,11 @@ resource "aws_security_group" "sg" {
     protocol    = -1
     from_port   = 0
     to_port     = 0
-    cidr_blocks = ["${var.vpc_cidr}"]
+    cidr_blocks = [var.vpc_cidr]
   }
 
-  tags {
-    Name = "${var.name}"
+  tags = {
+    Name = var.name
   }
 
   lifecycle {
@@ -109,8 +115,8 @@ resource "aws_security_group" "sg" {
 }
 
 resource "null_resource" "packer" {
-  triggers {
-    ami_name = "${var.ami_name}"
+  triggers = {
+    ami_name = var.ami_name
   }
 
   provisioner "local-exec" {
@@ -121,13 +127,14 @@ resource "null_resource" "packer" {
 #Output
 
 output "region" {
-  value = "${var.region}"
+  value = var.region
 }
 
 output "vpc_id" {
-  value = "${aws_vpc.vpc.id}"
+  value = aws_vpc.vpc.id
 }
 
 output "subnet_id" {
-  value = "${aws_subnet.subnet.id}"
+  value = aws_subnet.subnet.id
 }
+

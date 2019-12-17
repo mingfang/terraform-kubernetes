@@ -1,23 +1,26 @@
-variable "domain_name" {}
+variable "domain_name" {
+}
 
-variable origin_domain_name {}
+variable "origin_domain_name" {
+}
 
-variable route53_zone_id {}
+variable "route53_zone_id" {
+}
 
 variable "certificate_arn" {
   default = ""
 }
 
-resource "aws_cloudfront_distribution" web {
+resource "aws_cloudfront_distribution" "web" {
   enabled          = true
   retain_on_delete = false
 
   aliases = [
-    "${var.domain_name}",
+    var.domain_name,
   ]
 
   origin {
-    domain_name = "${var.origin_domain_name}"
+    domain_name = var.origin_domain_name
     origin_id   = "web_origin"
 
     custom_origin_config {
@@ -73,24 +76,25 @@ resource "aws_cloudfront_distribution" web {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = "${var.certificate_arn}"
+    acm_certificate_arn      = var.certificate_arn
     ssl_support_method       = "sni-only"
     minimum_protocol_version = "TLSv1"
   }
 }
 
 resource "aws_route53_record" "root" {
-  zone_id = "${var.route53_zone_id}"
-  name    = "${var.domain_name}"
+  zone_id = var.route53_zone_id
+  name    = var.domain_name
   type    = "A"
 
   alias {
-    name                   = "${aws_cloudfront_distribution.web.domain_name}"
-    zone_id                = "${aws_cloudfront_distribution.web.hosted_zone_id}"
+    name                   = aws_cloudfront_distribution.web.domain_name
+    zone_id                = aws_cloudfront_distribution.web.hosted_zone_id
     evaluate_target_health = false
   }
 }
 
 output "cloudfront_id" {
-  value = "${aws_cloudfront_distribution.web.id}"
+  value = aws_cloudfront_distribution.web.id
 }
+

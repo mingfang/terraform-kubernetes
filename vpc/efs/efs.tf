@@ -1,44 +1,62 @@
 # Variables
 
-variable "name" {}
+variable "name" {
+}
 
-variable "region" {}
+variable "region" {
+}
 
-variable "vpc_id" {}
+variable "vpc_id" {
+}
 
 variable "security_group_ids" {
-  type = "list"
+  type = list(string)
 }
 
 variable "azs" {
-  type = "list"
+  type = list(string)
 }
 
 variable "subnets" {
-  type = "list"
+  type = list(string)
 }
 
-variable "dns_name" {}
+variable "dns_name" {
+}
 
-variable "route53_zone_id" {}
+variable "route53_zone_id" {
+}
+
+variable "performance_mode" {
+  default = "generalPurpose"
+}
+
+variable "provisioned_throughput_in_mibps" {
+  default = ""
+}
 
 # Resources
 
 module "subnets" {
   source          = "../network/private_subnet"
-  name            = "${var.name}"
-  cidrs           = "${var.subnets}"
-  vpc_id          = "${var.vpc_id}"
-  azs             = "${var.azs}"
+  name            = var.name
+  cidrs           = var.subnets
+  vpc_id          = var.vpc_id
+  azs             = var.azs
   nat_support     = false
   nat_gateway_ids = []
 }
 
 resource "aws_efs_file_system" "efs" {
-  creation_token = "${var.name}"
+  creation_token   = var.name
+  performance_mode = var.performance_mode
 
-  tags {
-    Name = "${var.name}"
+  throughput_mode                 = var.provisioned_throughput_in_mibps != "" ? "provisioned" : "bursting"
+  provisioned_throughput_in_mibps = coalesce(var.provisioned_throughput_in_mibps, "1")
+  encrypted                       = true
+
+  tags = {
+    Name = var.name
   }
 
   lifecycle {
@@ -47,14 +65,14 @@ resource "aws_efs_file_system" "efs" {
 }
 
 resource "aws_security_group" "efs_sg" {
-  name   = "${var.name}"
-  vpc_id = "${var.vpc_id}"
+  name   = var.name
+  vpc_id = var.vpc_id
 
   ingress {
     from_port       = 0
     to_port         = 0
     protocol        = -1
-    security_groups = ["${var.security_group_ids}"]
+    security_groups = var.security_group_ids
   }
 
   egress {
@@ -64,21 +82,21 @@ resource "aws_security_group" "efs_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags {
-    Name = "${var.name}"
+  tags = {
+    Name = var.name
   }
 }
 
 resource "aws_efs_mount_target" "target" {
-  count           = "${length(var.azs)}"
-  subnet_id       = "${element(module.subnets.ids, count.index)}"
-  file_system_id  = "${aws_efs_file_system.efs.id}"
-  security_groups = ["${aws_security_group.efs_sg.id}"]
+  count           = length(var.azs)
+  subnet_id       = element(module.subnets.ids, count.index)
+  file_system_id  = aws_efs_file_system.efs.id
+  security_groups = [aws_security_group.efs_sg.id]
 }
 
 resource "aws_route53_record" "efs" {
-  name    = "${var.dns_name}"
-  zone_id = "${var.route53_zone_id}"
+  name    = var.dns_name
+  zone_id = var.route53_zone_id
   type    = "CNAME"
   ttl     = "300"
   records = ["${aws_efs_file_system.efs.id}.efs.${var.region}.amazonaws.com"]
@@ -87,9 +105,10 @@ resource "aws_route53_record" "efs" {
 # Output
 
 output "efs_id" {
-  value = "${aws_efs_file_system.efs.id}"
+  value = aws_efs_file_system.efs.id
 }
 
 output "fqdn" {
-  value = "${aws_route53_record.efs.fqdn}"
+  value = aws_route53_record.efs.fqdn
 }
+
