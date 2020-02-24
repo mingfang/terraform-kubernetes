@@ -3,6 +3,10 @@
 variable "name" {
 }
 
+variable "enable" {
+  default = true
+}
+
 variable "vpc_id" {
 }
 
@@ -59,6 +63,7 @@ resource "aws_security_group" "bastion" {
 }
 
 resource "aws_instance" "bastion" {
+  count = var.enable ? 1 : 0
   ami                         = var.image_id
   instance_type               = var.instance_type
   subnet_id                   = var.subnet_id
@@ -86,16 +91,17 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_route53_record" "bastion" {
+  count = var.enable ? 1 : 0
   name    = "bastion"
   zone_id = var.route53_zone_id
   type    = "CNAME"
   ttl     = "300"
-  records = [aws_instance.bastion.public_dns]
+  records = [aws_instance.bastion.0.public_dns]
 }
 
 # Outputs
 
 output "fqdn" {
-  value = aws_route53_record.bastion.fqdn
+  value = var.enable ? aws_route53_record.bastion.0.fqdn : ""
 }
 
