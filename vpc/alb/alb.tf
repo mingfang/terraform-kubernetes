@@ -166,9 +166,7 @@ resource "aws_route53_record" "public" {
 # Output
 
 output "target_group_arns" {
-  value = [
-    aws_alb_target_group.atg.*.arn,
-  ]
+  value = aws_alb_target_group.atg.*.arn
 }
 
 output "alb_arn" {
