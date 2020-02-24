@@ -33,6 +33,12 @@ variable "zone" {
 variable "size" {
 }
 
+# Setting on_demand_base_capacity < size would result in (size - on_demand_base_capacity) spot instances
+variable "on_demand_base_capacity" {
+  type = number
+  default = null
+}
+
 variable "alb_enable" {
   default = false
 }
@@ -190,23 +196,31 @@ data "template_file" "start" {
   }
 }
 
-resource "aws_launch_configuration" "lc" {
-  count                       = var.size > 0 ? 1 : 0
-  name_prefix                 = "${var.name}-"
-  instance_type               = var.instance_type
-  image_id                    = var.image_id
-  key_name                    = var.key_name
-  security_groups             = [var.security_group_id]
-  user_data                   = data.template_file.start.rendered
-  iam_instance_profile        = aws_iam_instance_profile.instance_profile.name
-  associate_public_ip_address = false
+resource "aws_launch_template" "this" {
+  count           = var.size > 0 ? 1 : 0
+  name_prefix     = "${var.name}-"
+  instance_type   = var.instance_type
+  image_id        = var.image_id
+  key_name        = var.key_name
+  user_data       = base64encode(data.template_file.start.rendered)
 
-  //  ebs_optimized               = true
+  iam_instance_profile {
+    name = aws_iam_instance_profile.instance_profile.name
+  }
 
-  root_block_device {
-    volume_size           = var.volume_size
-    volume_type           = "gp2"
-    delete_on_termination = "true"
+  network_interfaces {
+    associate_public_ip_address = false
+    security_groups = [var.security_group_id]
+  }
+
+  block_device_mappings {
+    device_name = "/dev/sda1"
+
+    ebs {
+      volume_size           = var.volume_size
+      volume_type           = "gp2"
+      delete_on_termination = "true"
+    }
   }
 
   lifecycle {
@@ -214,7 +228,7 @@ resource "aws_launch_configuration" "lc" {
   }
 }
 
-resource "aws_autoscaling_group" "asg" {
+resource "aws_autoscaling_group" "this" {
   count                     = var.size > 0 ? 1 : 0
   name_prefix               = "${var.name}-"
   desired_capacity          = var.size
@@ -222,9 +236,22 @@ resource "aws_autoscaling_group" "asg" {
   max_size                  = var.size
   default_cooldown          = 60
   health_check_grace_period = 60
-  launch_configuration      = aws_launch_configuration.lc[0].name
   vpc_zone_identifier       = module.subnets.ids
   target_group_arns         = module.alb.target_group_arns
+
+  mixed_instances_policy {
+    instances_distribution {
+      on_demand_base_capacity                  = var.on_demand_base_capacity != null ? var.on_demand_base_capacity : var.size
+      on_demand_percentage_above_base_capacity = 0
+    }
+
+    launch_template {
+      launch_template_specification {
+        launch_template_id = aws_launch_template.this[0].id
+        version            = "$Latest"
+      }
+    }
+  }
 
   tag {
     key                 = "Name"
