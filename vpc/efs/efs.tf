@@ -32,7 +32,8 @@ variable "performance_mode" {
 }
 
 variable "provisioned_throughput_in_mibps" {
-  default = ""
+  type = number
+  default = null
 }
 
 # Resources
@@ -51,8 +52,8 @@ resource "aws_efs_file_system" "efs" {
   creation_token   = var.name
   performance_mode = var.performance_mode
 
-  throughput_mode                 = var.provisioned_throughput_in_mibps != "" ? "provisioned" : "bursting"
-  provisioned_throughput_in_mibps = coalesce(var.provisioned_throughput_in_mibps, "1")
+  throughput_mode                 = var.provisioned_throughput_in_mibps == null ? "bursting" : "provisioned"
+  provisioned_throughput_in_mibps = var.provisioned_throughput_in_mibps
   encrypted                       = true
 
   tags = {
