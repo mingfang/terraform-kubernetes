@@ -22,6 +22,12 @@ resource "aws_acm_certificate" "cert" {
   validation_method         = "DNS"
 }
 
+resource "aws_acm_certificate_validation" "cert_validation" {
+  count                   = var.enable ? 1 : 0
+  certificate_arn         = aws_acm_certificate.cert[0].arn
+  validation_record_fqdns = [aws_route53_record.cert_record[0].fqdn]
+}
+
 resource "aws_route53_record" "cert_record" {
   count   = var.enable ? 1 : 0
   name    = aws_acm_certificate.cert[0].domain_validation_options[0].resource_record_name
@@ -29,12 +35,6 @@ resource "aws_route53_record" "cert_record" {
   zone_id = var.zone_id
   records = [aws_acm_certificate.cert[0].domain_validation_options[0].resource_record_value]
   ttl     = 60
-}
-
-resource "aws_acm_certificate_validation" "cert_validation" {
-  count                   = var.enable ? 1 : 0
-  certificate_arn         = aws_acm_certificate.cert[0].arn
-  validation_record_fqdns = [aws_route53_record.cert_record[0].fqdn]
 }
 
 output "arn" {

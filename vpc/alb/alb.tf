@@ -11,7 +11,11 @@ variable "listeners_count" {
 }
 
 variable "listeners" {
-  type    = list(string)
+  type = list(object({
+    port         = number
+    protocol     = string
+    health_check = string
+  }))
   default = []
 }
 

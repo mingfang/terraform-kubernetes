@@ -66,6 +66,6 @@ resource "aws_route_table_association" "route_association" {
 # Output
 
 output "ids" {
-  value = [aws_subnet.subnets.*.id]
+  value = aws_subnet.subnets.*.id
 }
 

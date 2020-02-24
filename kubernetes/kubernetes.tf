@@ -335,17 +335,15 @@ module "efs" {
 resource "aws_network_acl" "acl" {
   vpc_id = module.vpc.id
 
-  subnet_ids = [
-    concat(
-      module.network.public_subnet_ids,
-      module.com_zone.subnet_ids,
-      module.green_zone.subnet_ids,
-      module.net_zone.subnet_ids,
-      module.admin_zone.subnet_ids,
-      module.db_zone.subnet_ids,
-      module.kmaster.subnet_ids,
-    ),
-  ]
+  subnet_ids = concat(
+    module.network.public_subnet_ids,
+    module.com_zone.subnet_ids,
+    module.green_zone.subnet_ids,
+    module.net_zone.subnet_ids,
+    module.admin_zone.subnet_ids,
+    module.db_zone.subnet_ids,
+    module.kmaster.subnet_ids,
+  )
 
   ingress {
     protocol   = "-1"

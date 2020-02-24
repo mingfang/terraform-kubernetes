@@ -154,8 +154,8 @@ resource "aws_elb" "public" {
 }
 
 resource "aws_elb" "private" {
-  name = "${var.name}-private-elb"
-  subnets                     = [module.subnets.ids]
+  name                        = "${var.name}-private-elb"
+  subnets                     = module.subnets.ids
   internal                    = true
   cross_zone_load_balancing   = true
   idle_timeout                = 500
@@ -298,8 +298,8 @@ resource "aws_autoscaling_group" "asg" {
   default_cooldown          = 60
   health_check_grace_period = 60
   launch_configuration      = aws_launch_configuration.lc.name
-  vpc_zone_identifier = [module.subnets.ids]
-  load_balancers      = [aws_elb.private.id, aws_elb.public.id]
+  vpc_zone_identifier       = module.subnets.ids
+  load_balancers            = [aws_elb.private.id, aws_elb.public.id]
 
   tag {
     key                 = "Name"

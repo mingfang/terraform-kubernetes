@@ -157,7 +157,7 @@ module "alb" {
   enable                  = var.alb_enable
   name                    = var.name
   vpc_id                  = var.vpc_id
-  subnet_ids              = [var.alb_subnet_ids]
+  subnet_ids              = var.alb_subnet_ids
   internal                = var.alb_internal
   dns_name_private        = var.alb_dns_name_private
   route53_zone_id_private = var.alb_route53_zone_id_private
@@ -223,8 +223,8 @@ resource "aws_autoscaling_group" "asg" {
   default_cooldown          = 60
   health_check_grace_period = 60
   launch_configuration      = aws_launch_configuration.lc[0].name
-  vpc_zone_identifier = [module.subnets.ids]
-  target_group_arns = [module.alb.target_group_arns]
+  vpc_zone_identifier       = module.subnets.ids
+  target_group_arns         = module.alb.target_group_arns
 
   tag {
     key                 = "Name"
