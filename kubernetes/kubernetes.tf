@@ -31,7 +31,7 @@ variable "com_size" {
 }
 
 variable "com_instance_type" {
-  default = "t3.medium"
+  default = "t3a.medium"
 }
 
 variable "com_volume_size" {
@@ -43,7 +43,7 @@ variable "green_size" {
 }
 
 variable "green_instance_type" {
-  default = "t3.medium"
+  default = "t3a.medium"
 }
 
 variable "green_subnets" {
@@ -60,7 +60,7 @@ variable "net_size" {
 }
 
 variable "net_instance_type" {
-  default = "t3.medium"
+  default = "t3a.medium"
 }
 
 variable "net_subnets" {
@@ -77,7 +77,7 @@ variable "db_size" {
 }
 
 variable "db_instance_type" {
-  default = "t3.medium"
+  default = "t3a.medium"
 }
 
 variable "db_subnets" {
@@ -94,7 +94,7 @@ variable "admin_size" {
 }
 
 variable "admin_instance_type" {
-  default = "t3.medium"
+  default = "t3a.medium"
 }
 
 variable "admin_subnets" {
@@ -107,12 +107,14 @@ variable "admin_volume_size" {
 }
 
 variable "kmaster_instance_type" {
-  default = "t3.medium"
+  default = "t3a.medium"
 }
 
 variable "bastion_instance_type" {
-  default = "t3.nano"
+  default = "t3a.nano"
 }
+
+variable "bastion_enable" {}
 
 variable "vpc_cidr" {
   default = "10.248.0.0/16"
@@ -177,8 +179,8 @@ module "vpc" {
 module "network" {
   source         = "../vpc/network"
   name           = var.name
-  vpc_id         = module.vpc.id
-  vpc_cidr       = module.vpc.cidr
+  vpc_id         = module.vpc.this.id
+  vpc_cidr       = module.vpc.this.cidr_block
   azs            = var.azs
   public_subnets = var.public_subnets
 }
@@ -186,10 +188,11 @@ module "network" {
 module "bastion" {
   source          = "../vpc/bastion"
   name            = "${var.name}-bastion"
+  enable          = var.bastion_enable
   instance_type   = var.bastion_instance_type
   image_id        = var.ami_id
   key_name        = aws_key_pair.cluster_key_pair.key_name
-  vpc_id          = module.vpc.id
+  vpc_id          = module.vpc.this.id
   vpc_cidr        = var.vpc_cidr
   subnet_id       = element(module.network.public_subnet_ids, 0)
   route53_zone_id = var.route53_zone_id
@@ -199,13 +202,13 @@ module "kmaster" {
   source                      = "./kmaster"
   name                        = "${var.name}-kmaster"
   instance_type               = var.kmaster_instance_type
-  vpc_id                      = module.vpc.id
+  vpc_id                      = module.vpc.this.id
   vpc_cidr                    = var.vpc_cidr
   azs                         = var.azs
   nat_ids                     = module.network.nat_gateway_ids
   subnets                     = var.kmaster_subnets
   key_name                    = aws_key_pair.cluster_key_pair.key_name
-  alb_route53_zone_id_private = module.network.route53_private_id
+  alb_route53_zone_id_private = module.network.route53_private.id
   alb_route53_zone_id_public  = var.route53_zone_id
   alb_subnet_ids              = module.network.public_subnet_ids
   image_id                    = var.ami_id
@@ -218,7 +221,7 @@ module "green_zone" {
   zone              = "green"
   size              = var.green_size
   instance_type     = var.green_instance_type
-  vpc_id            = module.vpc.id
+  vpc_id            = module.vpc.this.id
   vpc_cidr          = var.vpc_cidr
   azs               = var.azs
   nat_ids           = module.network.nat_gateway_ids
@@ -237,7 +240,7 @@ module "net_zone" {
   size              = var.net_size
   instance_type     = var.net_instance_type
   subnets           = var.net_subnets
-  vpc_id            = module.vpc.id
+  vpc_id            = module.vpc.this.id
   vpc_cidr          = var.vpc_cidr
   azs               = var.azs
   nat_ids           = module.network.nat_gateway_ids
@@ -255,7 +258,7 @@ module "db_zone" {
   size              = var.db_size
   instance_type     = var.db_instance_type
   subnets           = var.db_subnets
-  vpc_id            = module.vpc.id
+  vpc_id            = module.vpc.this.id
   vpc_cidr          = var.vpc_cidr
   azs               = var.azs
   nat_ids           = module.network.nat_gateway_ids
@@ -273,7 +276,7 @@ module "admin_zone" {
   size              = var.admin_size
   instance_type     = var.admin_instance_type
   subnets           = var.admin_subnets
-  vpc_id            = module.vpc.id
+  vpc_id            = module.vpc.this.id
   vpc_cidr          = var.vpc_cidr
   azs               = var.azs
   nat_ids           = module.network.nat_gateway_ids
@@ -288,7 +291,7 @@ module "admin_zone" {
   alb_internal                = false
   alb_subnet_ids              = module.network.public_subnet_ids
   alb_dns_name_private        = "admin"
-  alb_route53_zone_id_private = module.network.route53_private_id
+  alb_route53_zone_id_private = module.network.route53_private.id
   alb_dns_names_public        = ["*.admin.${data.aws_route53_zone.public.name}"]
   alb_route53_zone_id_public  = var.route53_zone_id
 }
@@ -300,7 +303,7 @@ module "com_zone" {
   size              = var.com_size
   instance_type     = var.com_instance_type
   subnets           = var.com_subnets
-  vpc_id            = module.vpc.id
+  vpc_id            = module.vpc.this.id
   vpc_cidr          = var.vpc_cidr
   azs               = var.azs
   nat_ids           = module.network.nat_gateway_ids
@@ -315,7 +318,7 @@ module "com_zone" {
   alb_internal                = false
   alb_subnet_ids              = module.network.public_subnet_ids
   alb_dns_name_private        = "com"
-  alb_route53_zone_id_private = module.network.route53_private_id
+  alb_route53_zone_id_private = module.network.route53_private.id
   alb_dns_names_public        = ["*.${data.aws_route53_zone.public.name}"]
   alb_route53_zone_id_public  = var.route53_zone_id
 }
@@ -323,17 +326,17 @@ module "com_zone" {
 module "efs" {
   source             = "../vpc/efs"
   name               = "${var.name}-efs"
-  vpc_id             = module.vpc.id
+  vpc_id             = module.vpc.this.id
   region             = var.region
   azs                = var.azs
   subnets            = var.efs_subnets
   security_group_ids = [module.network.security_group_id, module.kmaster.security_group_id]
   dns_name           = "cluster-data"
-  route53_zone_id    = module.network.route53_private_id
+  route53_zone_id    = module.network.route53_private.id
 }
 
 resource "aws_network_acl" "acl" {
-  vpc_id = module.vpc.id
+  vpc_id = module.vpc.this.id
 
   subnet_ids = concat(
     module.network.public_subnet_ids,
@@ -370,12 +373,8 @@ resource "aws_network_acl" "acl" {
 
 # OUTPUTS
 
-output "vpc_id" {
-  value = module.vpc.id
-}
-
-output "vpc_cidr" {
-  value = module.vpc.cidr
+output "vpc" {
+  value = module.vpc.this
 }
 
 output "efs_fqdn" {
@@ -390,7 +389,7 @@ output "kmaster_fqdn" {
   value = module.kmaster.public_fqdn
 }
 
-output "route53_private_id" {
-  value = module.network.route53_private_id
+output "route53_private" {
+  value = module.network.route53_private
 }
 

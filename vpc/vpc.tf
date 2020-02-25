@@ -25,11 +25,6 @@ resource "aws_vpc" "vpc" {
   }
 }
 
-output "id" {
-  value = aws_vpc.vpc.id
+output "this" {
+  value = aws_vpc.vpc
 }
-
-output "cidr" {
-  value = aws_vpc.vpc.cidr_block
-}
-
