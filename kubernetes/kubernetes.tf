@@ -194,7 +194,7 @@ module "bastion" {
   key_name        = aws_key_pair.cluster_key_pair.key_name
   vpc_id          = module.vpc.this.id
   vpc_cidr        = var.vpc_cidr
-  subnet_id       = element(module.network.public_subnet_ids, 0)
+  subnet_id       = length(module.network.public_subnet_ids) > 0 ? element(module.network.public_subnet_ids, 0) : null
   route53_zone_id = var.route53_zone_id
 }
 
