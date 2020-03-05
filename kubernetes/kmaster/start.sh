@@ -34,9 +34,9 @@ export REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/
 cd ~root/docker-kubernetes-master
 ./run
 
-#upload kubernetes pki to s3
+#upload cluster-admin kubeconfig file to s3
 
-cd ~root/docker-kubernetes-master/pki-data
+cd ~root/docker-kubernetes-master/vault-data
 until curl -s localhost:8080/healthz; do echo "Waiting for kubernetes..."; sleep 10; done
 
 KEYS=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/$AWS_PROFILE)
