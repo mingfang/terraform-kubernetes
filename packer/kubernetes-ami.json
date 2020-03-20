@@ -27,7 +27,7 @@
       "source_ami_filter": {
         "filters": {
           "virtualization-type": "hvm",
-          "name": "*ubuntu-bionic-18.04-amd64-server-*",
+          "name": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*",
           "root-device-type": "ebs"
         },
         "owners": [
@@ -44,6 +44,8 @@
       "inline": [
         "sleep 30",
         "export DEBIAN_FRONTEND=noninteractive",
+        "snap list|grep kube|awk '{print $1}'|xargs --no-run-if-empty  -L 1 -I {} snap remove {}",
+        "apt-get update",
         "apt-get install -y apt-transport-https ca-certificates curl software-properties-common",
         "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -",
         "add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"",
