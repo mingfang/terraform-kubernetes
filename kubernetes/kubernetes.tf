@@ -1,165 +1,3 @@
-# Variables
-
-variable "name" {
-}
-
-variable "route53_zone_id" {
-}
-
-data "aws_route53_zone" "public" {
-  zone_id = var.route53_zone_id
-}
-
-variable "access_key" {
-}
-
-variable "secret_key" {
-}
-
-variable "public_key_path" {
-}
-
-variable "region" {
-}
-
-variable "azs" {
-  type = list(string)
-}
-
-variable "com_size" {
-  default = 1
-}
-
-variable "com_instance_type" {
-  default = "t3a.medium"
-}
-
-variable "com_volume_size" {
-  default = "16"
-}
-
-variable "green_size" {
-  default = 1
-}
-
-variable "green_instance_type" {
-  default = "t3a.medium"
-}
-
-variable "green_subnets" {
-  type    = list(string)
-  default = ["10.248.31.0/24", "10.248.32.0/24", "10.248.33.0/24"]
-}
-
-variable "green_volume_size" {
-  default = "16"
-}
-
-variable "net_size" {
-  default = 1
-}
-
-variable "net_instance_type" {
-  default = "t3a.medium"
-}
-
-variable "net_subnets" {
-  type    = list(string)
-  default = ["10.248.41.0/24", "10.248.42.0/24", "10.248.43.0/24"]
-}
-
-variable "net_volume_size" {
-  default = "16"
-}
-
-variable "db_size" {
-  default = 1
-}
-
-variable "db_instance_type" {
-  default = "t3a.medium"
-}
-
-variable "db_subnets" {
-  type    = list(string)
-  default = ["10.248.61.0/24", "10.248.62.0/24", "10.248.63.0/24"]
-}
-
-variable "db_volume_size" {
-  default = "16"
-}
-
-variable "admin_size" {
-  default = 1
-}
-
-variable "admin_instance_type" {
-  default = "t3a.medium"
-}
-
-variable "admin_subnets" {
-  type    = list(string)
-  default = ["10.248.51.0/24", "10.248.52.0/24", "10.248.53.0/24"]
-}
-
-variable "admin_volume_size" {
-  default = "16"
-}
-
-variable "kmaster_instance_type" {
-  default = "t3a.medium"
-}
-
-variable "bastion_instance_type" {
-  default = "t3a.nano"
-}
-
-variable "bastion_enable" {}
-
-variable "vpc_cidr" {
-  default = "10.248.0.0/16"
-}
-
-variable "public_subnets" {
-  type    = list(string)
-  default = ["10.248.11.0/24", "10.248.12.0/24", "10.248.13.0/24"]
-}
-
-variable "com_subnets" {
-  type    = list(string)
-  default = ["10.248.21.0/24", "10.248.22.0/24", "10.248.23.0/24"]
-}
-
-variable "efs_subnets" {
-  type    = list(string)
-  default = ["10.248.71.0/24", "10.248.72.0/24", "10.248.73.0/24"]
-}
-
-variable "kmaster_subnets" {
-  type    = list(string)
-  default = ["10.248.91.0/24", "10.248.92.0/24", "10.248.93.0/24"]
-}
-
-variable "peering_subnets" {
-  type    = list(string)
-  default = ["10.248.1.0/32", "10.248.1.10/32", "10.248.1.0/24"]
-}
-
-variable "admin_certificate_arn" {
-  default = ""
-}
-
-variable "com_certificate_arn" {
-  default = ""
-}
-
-variable "ami_id" {
-}
-
-# Resources
-
-//data "aws_availability_zones" "available" {}
-
 resource "aws_key_pair" "cluster_key_pair" {
   key_name   = "${var.name}-key-pair"
   public_key = file(var.public_key_path)
@@ -269,6 +107,26 @@ module "db_zone" {
   volume_size       = var.db_volume_size
 }
 
+module "spot_zone" {
+  source                  = "./knode"
+  name                    = "${var.name}-knodes-spot"
+  zone                    = "spot"
+  size                    = var.spot_size
+  instance_type           = var.spot_instance_type
+  subnets                 = var.spot_subnets
+  vpc_id                  = module.vpc.this.id
+  vpc_cidr                = var.vpc_cidr
+  azs                     = var.azs
+  nat_ids                 = module.network.nat_gateway_ids
+  key_name                = aws_key_pair.cluster_key_pair.key_name
+  security_group_id       = module.network.security_group_id
+  image_id                = var.ami_id
+  kmaster                 = module.kmaster.private_fqdn
+  volume_size             = var.spot_volume_size
+  on_demand_base_capacity = 1
+  taints                  = "spotInstance=true:NoSchedule"
+}
+
 module "admin_zone" {
   source            = "./knode"
   name              = "${var.name}-knodes-admin"
@@ -292,8 +150,10 @@ module "admin_zone" {
   alb_subnet_ids              = module.network.public_subnet_ids
   alb_dns_name_private        = "admin"
   alb_route53_zone_id_private = module.network.route53_private.id
-  alb_dns_names_public        = ["*.admin.${data.aws_route53_zone.public.name}"]
-  alb_route53_zone_id_public  = var.route53_zone_id
+  alb_dns_names_public = [
+    "*.admin.${data.aws_route53_zone.public.name}"
+  ]
+  alb_route53_zone_id_public = var.route53_zone_id
 }
 
 module "com_zone" {
@@ -319,20 +179,25 @@ module "com_zone" {
   alb_subnet_ids              = module.network.public_subnet_ids
   alb_dns_name_private        = "com"
   alb_route53_zone_id_private = module.network.route53_private.id
-  alb_dns_names_public        = ["*.${data.aws_route53_zone.public.name}"]
-  alb_route53_zone_id_public  = var.route53_zone_id
+  alb_dns_names_public = [
+    "*.${data.aws_route53_zone.public.name}"
+  ]
+  alb_route53_zone_id_public = var.route53_zone_id
 }
 
 module "efs" {
-  source             = "../vpc/efs"
-  name               = "${var.name}-efs"
-  vpc_id             = module.vpc.this.id
-  region             = var.region
-  azs                = var.azs
-  subnets            = var.efs_subnets
-  security_group_ids = [module.network.security_group_id, module.kmaster.security_group_id]
-  dns_name           = "cluster-data"
-  route53_zone_id    = module.network.route53_private.id
+  source  = "../vpc/efs"
+  name    = "${var.name}-efs"
+  vpc_id  = module.vpc.this.id
+  region  = var.region
+  azs     = var.azs
+  subnets = var.efs_subnets
+  security_group_ids = [
+    module.network.security_group_id,
+    module.kmaster.security_group_id,
+  ]
+  dns_name        = "cluster-data"
+  route53_zone_id = module.network.route53_private.id
 }
 
 resource "aws_network_acl" "acl" {
@@ -343,6 +208,7 @@ resource "aws_network_acl" "acl" {
     module.com_zone.subnet_ids,
     module.green_zone.subnet_ids,
     module.net_zone.subnet_ids,
+    module.spot_zone.subnet_ids,
     module.admin_zone.subnet_ids,
     module.db_zone.subnet_ids,
     module.kmaster.subnet_ids,
@@ -370,26 +236,3 @@ resource "aws_network_acl" "acl" {
     Name = "${var.name}-all"
   }
 }
-
-# OUTPUTS
-
-output "vpc" {
-  value = module.vpc.this
-}
-
-output "efs_fqdn" {
-  value = "${module.efs.efs_id}.efs.${var.region}.amazonaws.com"
-}
-
-output "bastion_fqdn" {
-  value = module.bastion.fqdn
-}
-
-output "kmaster_fqdn" {
-  value = module.kmaster.public_fqdn
-}
-
-output "route53_private" {
-  value = module.network.route53_private
-}
-
