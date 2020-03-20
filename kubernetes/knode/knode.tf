@@ -1,89 +1,5 @@
 # Variables
 
-variable "name" {
-}
-
-variable "vpc_id" {
-}
-
-variable "vpc_cidr" {
-}
-
-variable "key_name" {
-}
-
-variable "azs" {
-  type = list(string)
-}
-
-variable "subnets" {
-  type = list(string)
-}
-
-variable "nat_ids" {
-  type = list(string)
-}
-
-variable "instance_type" {
-}
-
-variable "zone" {
-}
-
-variable "size" {
-}
-
-# Setting on_demand_base_capacity < size would result in (size - on_demand_base_capacity) spot instances
-variable "on_demand_base_capacity" {
-  type = number
-  default = null
-}
-
-variable "alb_enable" {
-  default = false
-}
-
-variable "alb_internal" {
-  default = true
-}
-
-variable "alb_dns_name_private" {
-  default = ""
-}
-
-variable "alb_dns_names_public" {
-  type    = list(string)
-  default = []
-}
-
-variable "alb_route53_zone_id_private" {
-  default = ""
-}
-
-variable "alb_route53_zone_id_public" {
-  default = ""
-}
-
-variable "alb_subnet_ids" {
-  type    = list(string)
-  default = []
-}
-
-variable "security_group_id" {
-}
-
-variable "image_id" {
-}
-
-variable "kmaster" {
-}
-
-variable "certificate_arn" {
-  default = ""
-}
-
-variable "volume_size" {
-}
 
 # Resources
 
@@ -191,18 +107,19 @@ data "template_file" "start" {
   template = file("${path.module}/start.sh")
 
   vars = {
-    zone    = var.zone
+    role    = var.zone
     kmaster = var.kmaster
+    taints  = var.taints
   }
 }
 
 resource "aws_launch_template" "this" {
-  count           = var.size > 0 ? 1 : 0
-  name_prefix     = "${var.name}-"
-  instance_type   = var.instance_type
-  image_id        = var.image_id
-  key_name        = var.key_name
-  user_data       = base64encode(data.template_file.start.rendered)
+  count         = var.size > 0 ? 1 : 0
+  name_prefix   = "${var.name}-"
+  instance_type = var.instance_type
+  image_id      = var.image_id
+  key_name      = var.key_name
+  user_data     = base64encode(data.template_file.start.rendered)
 
   iam_instance_profile {
     name = aws_iam_instance_profile.instance_profile.name
@@ -210,7 +127,8 @@ resource "aws_launch_template" "this" {
 
   network_interfaces {
     associate_public_ip_address = false
-    security_groups = [var.security_group_id]
+    security_groups             = [var.security_group_id]
+    delete_on_termination       = true
   }
 
   block_device_mappings {

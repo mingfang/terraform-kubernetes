@@ -3,7 +3,7 @@
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 export KMASTER="${kmaster}"
-export ZONE="${zone}"
+export TAINTS="${taints}"
 
 #setup fan networking
 
@@ -24,8 +24,8 @@ INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 AMI_ID=$(curl -s http://169.254.169.254/latest/meta-data/ami-id)
 DOCKER=$(docker version --format '{{.Server.Version}}')
 SHA=$(git rev-parse --short HEAD)
-export LABELS="zone=$ZONE,sha=$SHA,ami=$AMI_ID,docker=$DOCKER,instance-id=$INSTANCE_ID"
-export LABELS="$LABELS,failure-domain.beta.kubernetes.io/region=$REGION,failure-domain.beta.kubernetes.io/zone=$AZ,beta.kubernetes.io/instance-type=$INSTANCE_TYPE"
+export LABELS="role=${role},sha=$SHA,ami=$AMI_ID,docker=$DOCKER,instance-id=$INSTANCE_ID"
+export LABELS="$LABELS,topology.kubernetes.io/region=$REGION,topology.kubernetes.io/zone=$AZ,node.kubernetes.io/instance-type=$INSTANCE_TYPE"
 echo "LABELS=$LABELS"
 
 #setup vault
@@ -41,7 +41,7 @@ PROXY_TOKEN_CURL=$(curl -s -X POST -H "X-Vault-Token: $VAULT_TOKEN" -H "X-Vault-
 export PROXY_TOKEN=$(echo $PROXY_TOKEN_CURL | jq -r .wrap_info.token)
 
 # auto attach volumes
-#/attach_volume.py --tag Zone --value "$ZONE" --attach_as /dev/xvdf || true
+#/attach_volume.py --tag Role --value "${role}" --attach_as /dev/xvdf || true
 
 #start
 cd ~root/docker-kubernetes-node
