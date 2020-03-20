@@ -280,7 +280,7 @@ resource "aws_launch_configuration" "lc" {
   iam_instance_profile        = aws_iam_instance_profile.instance_profile.name
 
   root_block_device {
-    volume_size           = "8"
+    volume_size           = "24"
     volume_type           = "gp2"
     delete_on_termination = "true"
   }
