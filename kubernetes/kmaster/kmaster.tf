@@ -1,54 +1,3 @@
-# Variables
-
-variable "name" {
-}
-
-variable "vpc_id" {
-}
-
-variable "vpc_cidr" {
-}
-
-variable "key_name" {
-}
-
-variable "azs" {
-  type = list(string)
-}
-
-variable "subnets" {
-  type = list(string)
-}
-
-variable "nat_ids" {
-  type = list(string)
-}
-
-variable "instance_type" {
-}
-
-variable "image_id" {
-}
-
-variable "efs_dns_name" {
-  default = ""
-}
-
-variable "alb_route53_zone_id_private" {
-  default = ""
-}
-
-variable "alb_route53_zone_id_public" {
-  default = ""
-}
-
-variable "alb_subnet_ids" {
-  type    = list(string)
-  default = []
-}
-
-# Resources
-
 module "subnets" {
   source          = "../../vpc/network/private_subnet"
   name            = var.name
@@ -137,6 +86,7 @@ resource "aws_elb" "public" {
   connection_draining_timeout = 10
   security_groups             = [aws_security_group.elb_sg.id]
 
+  //API Server
   listener {
     instance_port     = 6443
     instance_protocol = "tcp"
@@ -163,6 +113,7 @@ resource "aws_elb" "private" {
   connection_draining_timeout = 10
   security_groups             = [aws_security_group.elb_sg.id]
 
+  //API Server
   listener {
     instance_port     = 6443
     instance_protocol = "tcp"
@@ -170,13 +121,7 @@ resource "aws_elb" "private" {
     lb_protocol       = "tcp"
   }
 
-  listener {
-    instance_port     = 4001
-    instance_protocol = "tcp"
-    lb_port           = 4001
-    lb_protocol       = "tcp"
-  }
-
+  //Vault
   listener {
     instance_port     = 8200
     instance_protocol = "tcp"
@@ -314,38 +259,44 @@ resource "aws_security_group" "sg" {
   name   = var.name
   vpc_id = var.vpc_id
 
-  //KMASTER
+  //need for ARP to work; figure out the port later
+  ingress {
+    protocol    = -1
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = [var.vpc_cidr]
+  }
+
   ingress {
     protocol    = "tcp"
     from_port   = 6443
     to_port     = 6443
     cidr_blocks = [var.vpc_cidr]
+    description = "kmaster"
   }
 
-  //VAULT
   ingress {
     protocol    = "tcp"
     from_port   = 8200
     to_port     = 8200
     cidr_blocks = [var.vpc_cidr]
+    description = "vault"
   }
 
-  //METRICS
   ingress {
     protocol    = "tcp"
     from_port   = 10250
     to_port     = 10250
     cidr_blocks = [var.vpc_cidr]
+    description = "metrics"
   }
 
   //SSH
   ingress {
-    protocol  = "tcp"
-    from_port = 22
-    to_port   = 22
-
-    #todo
-    cidr_blocks = ["0.0.0.0/0"]
+    protocol    = "tcp"
+    from_port   = 22
+    to_port     = 22
+    cidr_blocks = [var.vpc_cidr]
   }
 
   //EFS
@@ -354,6 +305,7 @@ resource "aws_security_group" "sg" {
     from_port   = 2049
     to_port     = 2049
     cidr_blocks = [var.vpc_cidr]
+    description = "EFS"
   }
 
   egress {
@@ -366,23 +318,8 @@ resource "aws_security_group" "sg" {
   tags = {
     Name = var.name
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
-
-# Outputs
-
-output "subnet_ids" {
-  value = module.subnets.ids
-}
-
-output "security_group_id" {
-  value = aws_security_group.sg.id
-}
-
-output "private_fqdn" {
-  value = aws_route53_record.private.fqdn
-}
-
-output "public_fqdn" {
-  value = aws_route53_record.public.fqdn
-}
-
