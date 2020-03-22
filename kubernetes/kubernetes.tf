@@ -191,7 +191,8 @@ module "com_zone" {
   alb_dns_name_private        = "com"
   alb_route53_zone_id_private = module.network.route53_private.id
   alb_dns_names_public = [
-    "*.${data.aws_route53_zone.public.name}"
+    data.aws_route53_zone.public.name,
+    "*.${data.aws_route53_zone.public.name}",
   ]
   alb_route53_zone_id_public = var.route53_zone_id
 }
