@@ -1,24 +1,3 @@
-# Variables
-
-variable "name" {
-}
-
-variable "vpc_id" {
-}
-
-variable "vpc_cidr" {
-}
-
-variable "azs" {
-  type = list(string)
-}
-
-variable "public_subnets" {
-  type = list(string)
-}
-
-# Resources
-
 resource "aws_internet_gateway" "gw" {
   vpc_id = var.vpc_id
 
@@ -44,7 +23,7 @@ module "public_subnets" {
 }
 
 resource "aws_route53_zone" "private" {
-  name   = "${var.name}.private"
+  name = "${var.name}.private"
   vpc {
     vpc_id = var.vpc_id
   }
@@ -66,8 +45,7 @@ resource "aws_security_group" "sg" {
     from_port = 22
     to_port   = 22
 
-    #todo
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.vpc_cidr]
   }
 
   egress {
@@ -85,26 +63,3 @@ resource "aws_security_group" "sg" {
     create_before_destroy = true
   }
 }
-
-# Output
-
-output "public_subnet_ids" {
-  value = module.public_subnets.ids
-}
-
-output "nat_gateway_ids" {
-  value = module.nats.ids
-}
-
-output "nat_gateway_public_ips" {
-  value = module.nats.public_ips
-}
-
-output "route53_private" {
-  value = aws_route53_zone.private
-}
-
-output "security_group_id" {
-  value = aws_security_group.sg.id
-}
-
