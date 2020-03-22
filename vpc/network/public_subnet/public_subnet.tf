@@ -1,25 +1,3 @@
-# Variables
-
-variable "name" {
-}
-
-variable "vpc_id" {
-}
-
-variable "cidrs" {
-  type = list(string)
-}
-
-variable "azs" {
-  type = list(string)
-}
-
-variable "internet_gateway_id" {
-  default = ""
-}
-
-# Resources
-
 resource "aws_subnet" "subnets" {
   count                   = length(var.azs)
   vpc_id                  = var.vpc_id
@@ -61,11 +39,5 @@ resource "aws_route_table_association" "route_association" {
   lifecycle {
     create_before_destroy = true
   }
-}
-
-# Output
-
-output "ids" {
-  value = aws_subnet.subnets.*.id
 }
 

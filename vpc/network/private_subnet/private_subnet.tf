@@ -1,38 +1,9 @@
-# Variables
-
-variable "name" {
-}
-
-variable "vpc_id" {
-}
-
-variable "cidrs" {
-  type = list(string)
-}
-
-variable "azs" {
-  type = list(string)
-}
-
-variable "nat_gateway_ids" {
-  type = list(string)
-}
-
-variable "nat_support" {
-  default = true
-}
-
-variable "enable" {
-  default = true
-}
-
-# Resources
-
 resource "aws_subnet" "subnets" {
-  count             = var.enable ? length(var.azs) : 0
-  vpc_id            = var.vpc_id
-  cidr_block        = element(var.cidrs, count.index)
-  availability_zone = element(var.azs, count.index)
+  count                   = var.enable ? length(var.azs) : 0
+  vpc_id                  = var.vpc_id
+  cidr_block              = element(var.cidrs, count.index)
+  availability_zone       = element(var.azs, count.index)
+  map_public_ip_on_launch = false
 
   tags = {
     Name = "${var.name}.${element(var.azs, count.index)}"
@@ -69,11 +40,5 @@ resource "aws_route_table_association" "route_association" {
   lifecycle {
     create_before_destroy = true
   }
-}
-
-# Output
-
-output "ids" {
-  value = aws_subnet.subnets.*.id
 }
 
