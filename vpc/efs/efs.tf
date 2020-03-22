@@ -1,43 +1,3 @@
-# Variables
-
-variable "name" {
-}
-
-variable "region" {
-}
-
-variable "vpc_id" {
-}
-
-variable "security_group_ids" {
-  type = list(string)
-}
-
-variable "azs" {
-  type = list(string)
-}
-
-variable "subnets" {
-  type = list(string)
-}
-
-variable "dns_name" {
-}
-
-variable "route53_zone_id" {
-}
-
-variable "performance_mode" {
-  default = "generalPurpose"
-}
-
-variable "provisioned_throughput_in_mibps" {
-  type = number
-  default = null
-}
-
-# Resources
-
 module "subnets" {
   source          = "../network/private_subnet"
   name            = var.name
@@ -102,14 +62,3 @@ resource "aws_route53_record" "efs" {
   ttl     = "300"
   records = ["${aws_efs_file_system.efs.id}.efs.${var.region}.amazonaws.com"]
 }
-
-# Output
-
-output "efs_id" {
-  value = aws_efs_file_system.efs.id
-}
-
-output "fqdn" {
-  value = aws_route53_record.efs.fqdn
-}
-
