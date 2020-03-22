@@ -314,14 +314,6 @@ resource "aws_security_group" "sg" {
   name   = var.name
   vpc_id = var.vpc_id
 
-  //ETCD
-  ingress {
-    protocol    = "tcp"
-    from_port   = 4001
-    to_port     = 4001
-    cidr_blocks = [var.vpc_cidr]
-  }
-
   //KMASTER
   ingress {
     protocol    = "tcp"
@@ -335,6 +327,14 @@ resource "aws_security_group" "sg" {
     protocol    = "tcp"
     from_port   = 8200
     to_port     = 8200
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  //METRICS
+  ingress {
+    protocol    = "tcp"
+    from_port   = 10250
+    to_port     = 10250
     cidr_blocks = [var.vpc_cidr]
   }
 
