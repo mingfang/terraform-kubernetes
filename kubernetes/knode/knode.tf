@@ -1,8 +1,3 @@
-# Variables
-
-
-# Resources
-
 module "subnets" {
   source          = "../../vpc/network/private_subnet"
   enable          = var.size > 0
@@ -181,10 +176,3 @@ resource "aws_autoscaling_group" "this" {
     create_before_destroy = true
   }
 }
-
-# Outputs
-
-output "subnet_ids" {
-  value = module.subnets.ids
-}
-
