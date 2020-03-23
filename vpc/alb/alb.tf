@@ -1,53 +1,3 @@
-# Variables
-
-variable "name" {
-}
-
-variable "vpc_id" {
-}
-
-variable "listeners_count" {
-  default = 0
-}
-
-variable "listeners" {
-  type = list(object({
-    port         = number
-    protocol     = string
-    health_check = string
-  }))
-  default = []
-}
-
-variable "subnet_ids" {
-  type = list(string)
-}
-
-variable "internal" {
-  default = false
-}
-
-variable "enable" {
-  default = true
-}
-
-variable "route53_zone_id_private" {
-}
-
-variable "dns_name_private" {
-}
-
-variable "route53_zone_id_public" {
-  default = ""
-}
-
-variable "dns_names_public" {
-  type    = list(string)
-  default = []
-}
-
-# Resources
-
 resource "aws_alb" "alb" {
   count    = var.enable ? 1 : 0
   name     = "${var.name}-alb"
@@ -162,22 +112,3 @@ resource "aws_route53_record" "public" {
     evaluate_target_health = true
   }
 }
-
-# Output
-
-output "target_group_arns" {
-  value = aws_alb_target_group.atg.*.arn
-}
-
-output "alb_arn" {
-  value = join(" ", aws_alb.alb.*.arn)
-}
-
-output "private_fqdn" {
-  value = join(" ", aws_route53_record.private.*.fqdn)
-}
-
-output "public_fqdns" {
-  value = aws_route53_record.public.*.fqdn
-}
-
