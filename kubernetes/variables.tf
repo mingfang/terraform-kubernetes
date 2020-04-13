@@ -89,6 +89,10 @@ variable "spot_size" {
   default = 0
 }
 
+variable "spot_on_demand_base_capacity" {
+  default = 0
+}
+
 variable "spot_instance_type" {
   default = "t3a.medium"
 }
@@ -163,4 +167,9 @@ variable "com_certificate_arn" {
 }
 
 variable "ami_id" {
+}
+
+variable efs_transition_to_ia {
+  type    = string
+  default = null
 }

@@ -132,7 +132,7 @@ module "spot_zone" {
   security_group_id = module.network.security_group_id
   kmaster           = module.kmaster.private_fqdn
 
-  on_demand_base_capacity = 1
+  on_demand_base_capacity = var.spot_on_demand_base_capacity
   taints                  = "spotInstance=true:NoSchedule"
 }
 
@@ -155,7 +155,7 @@ module "admin_zone" {
   kmaster           = module.kmaster.private_fqdn
 
   certificate_arn             = var.admin_certificate_arn
-  alb_enable                  = var.admin_size > 0
+  alb_enable                  = var.admin_certificate_arn != null
   alb_internal                = false
   alb_subnet_ids              = module.network.public_subnet_ids
   alb_dns_name_private        = "admin"
@@ -208,8 +208,9 @@ module "efs" {
     module.network.security_group_id,
     module.kmaster.security_group_id,
   ]
-  dns_name        = "cluster-data"
-  route53_zone_id = module.network.route53_private.id
+  dns_name         = "cluster-data"
+  route53_zone_id  = module.network.route53_private.id
+  transition_to_ia = var.efs_transition_to_ia
 }
 
 resource "aws_network_acl" "acl" {
