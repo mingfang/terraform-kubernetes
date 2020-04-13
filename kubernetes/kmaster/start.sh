@@ -23,10 +23,7 @@ mkdir -p /mnt/data/kmaster/{etcd-data,vault-data,pki-data}
 rm -r ~root/docker-kubernetes-master/{etcd-data,vault-data,pki-data}
 ln -s /mnt/data/kmaster/{etcd-data,vault-data,pki-data} ~root/docker-kubernetes-master
 
-#setup fan networking
-
 cd ~root/docker-kubernetes-node
-./fan-setup.sh
 
 #start
 

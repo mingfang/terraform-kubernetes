@@ -5,10 +5,7 @@ exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 export KMASTER="${kmaster}"
 export TAINTS="${taints}"
 
-#setup fan networking
-
 cd ~root/docker-kubernetes-node
-./fan-setup.sh
 
 #wait for dependencies
 
