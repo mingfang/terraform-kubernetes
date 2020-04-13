@@ -8,10 +8,6 @@ resource "aws_subnet" "subnets" {
   tags = {
     Name = "${var.name}.${element(var.azs, count.index)}"
   }
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_route_table" "route_tables" {
@@ -26,19 +22,11 @@ resource "aws_route_table" "route_tables" {
   tags = {
     Name = "${var.name}.${element(var.azs, count.index)}"
   }
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_route_table_association" "route_association" {
   count          = var.enable && var.nat_support ? length(var.azs) : 0
   subnet_id      = element(aws_subnet.subnets.*.id, count.index)
   route_table_id = element(aws_route_table.route_tables.*.id, count.index)
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
