@@ -16,6 +16,10 @@ resource "aws_efs_file_system" "efs" {
   provisioned_throughput_in_mibps = var.provisioned_throughput_in_mibps
   encrypted                       = true
 
+  lifecycle_policy {
+    transition_to_ia = var.transition_to_ia
+  }
+
   tags = {
     Name = var.name
   }

@@ -33,3 +33,8 @@ variable "provisioned_throughput_in_mibps" {
   type    = number
   default = null
 }
+
+variable transition_to_ia {
+  type    = string
+  default = null
+}
