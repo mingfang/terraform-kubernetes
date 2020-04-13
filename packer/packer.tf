@@ -98,11 +98,11 @@ resource "null_resource" "packer" {
       AWS_SHARED_CREDENTIALS_FILE = var.AWS_SHARED_CREDENTIALS_FILE
     }
     command = <<-EOF
-      packer build
-        -var "region=${var.region}"
-        -var "vpc_id=${aws_vpc.vpc.id}"
-        -var "subnet_id=${aws_subnet.subnet.id}"
-        -var "ami_name=${var.ami_name}"
+      packer build \
+        -var "region=${var.region}" \
+        -var "vpc_id=${aws_vpc.vpc.id}" \
+        -var "subnet_id=${aws_subnet.subnet.id}" \
+        -var "ami_name=${var.ami_name}" \
         ${path.module}/kubernetes-ami.json
       EOF
   }
