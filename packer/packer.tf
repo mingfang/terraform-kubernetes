@@ -1,29 +1,3 @@
-variable "ami_name" {
-}
-
-variable "access_key" {
-}
-
-variable "secret_key" {
-}
-
-variable "region" {
-}
-
-variable "az" {
-}
-
-variable "name" {
-}
-
-variable "vpc_cidr" {
-  default = "10.0.0.0/24"
-}
-
-variable "subnet_cidr" {
-  default = "10.0.0.0/24"
-}
-
 resource "aws_vpc" "vpc" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -120,7 +94,17 @@ resource "null_resource" "packer" {
   }
 
   provisioner "local-exec" {
-    command = "packer build -var \"region=${var.region}\" -var \"vpc_id=${aws_vpc.vpc.id}\" -var \"subnet_id=${aws_subnet.subnet.id}\" -var \"ami_name=${var.ami_name}\" -var \"access_key=${var.access_key}\" -var \"secret_key=${var.secret_key}\" ${path.module}/kubernetes-ami.json"
+    environment = {
+      AWS_SHARED_CREDENTIALS_FILE = var.AWS_SHARED_CREDENTIALS_FILE
+    }
+    command = <<-EOF
+      packer build
+        -var "region=${var.region}"
+        -var "vpc_id=${aws_vpc.vpc.id}"
+        -var "subnet_id=${aws_subnet.subnet.id}"
+        -var "ami_name=${var.ami_name}"
+        ${path.module}/kubernetes-ami.json
+      EOF
   }
 }
 
