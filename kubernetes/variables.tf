@@ -8,12 +8,6 @@ data "aws_route53_zone" "public" {
   zone_id = var.route53_zone_id
 }
 
-variable "access_key" {
-}
-
-variable "secret_key" {
-}
-
 variable "public_key_path" {
 }
 
