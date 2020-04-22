@@ -199,6 +199,14 @@ resource "aws_s3_bucket" "keys" {
   bucket_prefix = "${var.name}-keys-"
   acl           = "private"
   force_destroy = true
+
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
 }
 
 data "template_file" "start" {
