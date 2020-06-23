@@ -1,3 +1,7 @@
+data "aws_route53_zone" "public" {
+  zone_id = var.route53_zone_id
+}
+
 resource "aws_key_pair" "cluster_key_pair" {
   key_name   = "${var.name}-key-pair"
   public_key = file(var.public_key_path)
@@ -208,9 +212,10 @@ module "efs" {
     module.network.security_group_id,
     module.kmaster.security_group_id,
   ]
-  dns_name         = "cluster-data"
-  route53_zone_id  = module.network.route53_private.id
-  transition_to_ia = var.efs_transition_to_ia
+  dns_name                        = "cluster-data"
+  route53_zone_id                 = module.network.route53_private.id
+  transition_to_ia                = var.efs_transition_to_ia
+  provisioned_throughput_in_mibps = var.efs_provisioned_throughput_in_mibps
 }
 
 resource "aws_network_acl" "acl" {
