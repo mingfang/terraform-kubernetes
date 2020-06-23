@@ -1,26 +1,43 @@
-variable "name" {
-}
+variable "name" {}
 
-variable "route53_zone_id" {
-}
+variable "route53_zone_id" {}
 
-data "aws_route53_zone" "public" {
-  zone_id = var.route53_zone_id
-}
-
-variable "public_key_path" {
-}
-
-variable "region" {
-}
+variable "region" {}
 
 variable "azs" {
   type = list(string)
 }
 
+variable "ami_id" {}
+
+variable "public_key_path" {}
+
 variable "vpc_cidr" {
   default = "10.248.0.0/16"
 }
+
+// bastion
+
+variable "bastion_enable" {
+  default = false
+}
+
+variable "bastion_instance_type" {
+  default = "t3a.nano"
+}
+
+// kmaster
+
+variable "kmaster_instance_type" {
+  default = "t3a.medium"
+}
+
+variable "kmaster_subnets" {
+  type    = list(string)
+  default = ["10.248.91.0/24", "10.248.92.0/24", "10.248.93.0/24"]
+}
+
+// com
 
 variable "com_size" {
   default = 0
@@ -30,9 +47,20 @@ variable "com_instance_type" {
   default = "t3a.medium"
 }
 
+variable "com_subnets" {
+  type    = list(string)
+  default = ["10.248.21.0/24", "10.248.22.0/24", "10.248.23.0/24"]
+}
+
 variable "com_volume_size" {
   default = "24"
 }
+
+variable "com_certificate_arn" {
+  default = ""
+}
+
+// green
 
 variable "green_size" {
   default = 0
@@ -51,6 +79,8 @@ variable "green_volume_size" {
   default = "24"
 }
 
+// net
+
 variable "net_size" {
   default = 0
 }
@@ -68,6 +98,8 @@ variable "net_volume_size" {
   default = "24"
 }
 
+// db
+
 variable "db_size" {
   default = 0
 }
@@ -84,6 +116,8 @@ variable "db_subnets" {
 variable "db_volume_size" {
   default = "24"
 }
+
+// spot
 
 variable "spot_size" {
   default = 0
@@ -106,6 +140,8 @@ variable "spot_volume_size" {
   default = "24"
 }
 
+// admin
+
 variable "admin_size" {
   default = 0
 }
@@ -123,24 +159,26 @@ variable "admin_volume_size" {
   default = "24"
 }
 
-variable "kmaster_instance_type" {
-  default = "t3a.medium"
+variable "admin_certificate_arn" {
+  default = ""
 }
 
-variable "bastion_instance_type" {
-  default = "t3a.nano"
-}
-
-variable "bastion_enable" {}
+// public
 
 variable "public_subnets" {
   type    = list(string)
   default = ["10.248.11.0/24", "10.248.12.0/24", "10.248.13.0/24"]
 }
 
-variable "com_subnets" {
-  type    = list(string)
-  default = ["10.248.21.0/24", "10.248.22.0/24", "10.248.23.0/24"]
+// efs
+
+variable efs_transition_to_ia {
+  type    = string
+  default = null
+}
+
+variable "efs_provisioned_throughput_in_mibps" {
+  default = null
 }
 
 variable "efs_subnets" {
@@ -148,28 +186,9 @@ variable "efs_subnets" {
   default = ["10.248.71.0/24", "10.248.72.0/24", "10.248.73.0/24"]
 }
 
-variable "kmaster_subnets" {
-  type    = list(string)
-  default = ["10.248.91.0/24", "10.248.92.0/24", "10.248.93.0/24"]
-}
+// peering
 
 variable "peering_subnets" {
   type    = list(string)
   default = ["10.248.1.0/32", "10.248.1.10/32", "10.248.1.0/24"]
-}
-
-variable "admin_certificate_arn" {
-  default = ""
-}
-
-variable "com_certificate_arn" {
-  default = ""
-}
-
-variable "ami_id" {
-}
-
-variable efs_transition_to_ia {
-  type    = string
-  default = null
 }
