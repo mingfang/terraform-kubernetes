@@ -1,10 +1,8 @@
-variable "domain_name" {
+variable "aliases" {
+  type = list(string)
 }
 
 variable "origin_domain_name" {
-}
-
-variable "route53_zone_id" {
 }
 
 variable "certificate_arn" {
@@ -15,9 +13,7 @@ resource "aws_cloudfront_distribution" "web" {
   enabled          = true
   retain_on_delete = false
 
-  aliases = [
-    var.domain_name,
-  ]
+  aliases = var.aliases
 
   origin {
     domain_name = var.origin_domain_name
@@ -81,20 +77,3 @@ resource "aws_cloudfront_distribution" "web" {
     minimum_protocol_version = "TLSv1"
   }
 }
-
-resource "aws_route53_record" "root" {
-  zone_id = var.route53_zone_id
-  name    = var.domain_name
-  type    = "A"
-
-  alias {
-    name                   = aws_cloudfront_distribution.web.domain_name
-    zone_id                = aws_cloudfront_distribution.web.hosted_zone_id
-    evaluate_target_health = false
-  }
-}
-
-output "cloudfront_id" {
-  value = aws_cloudfront_distribution.web.id
-}
-
