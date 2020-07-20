@@ -18,3 +18,13 @@ output "route53_private" {
   value = module.network.route53_private
 }
 
+output "green_zone" {
+  value = module.green_zone
+}
+output "net_zone" {
+  value = module.net_zone
+}
+output "spot_zone" {
+  value = module.spot_zone
+}
+

@@ -6,26 +6,29 @@ module "subnets" {
   vpc_id          = var.vpc_id
   azs             = var.azs
   nat_gateway_ids = var.nat_ids
+
+  transit_gateway_id                      = var.transit_gateway_id
+  transit_gateway_destination_cidr_blocks = var.transit_gateway_destination_cidr_blocks
 }
 
 resource "aws_iam_role" "iam_role" {
   name = "${var.name}-role"
 
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "sts:AssumeRole",
-      "Sid": "",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
+  assume_role_policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": "sts:AssumeRole",
+        "Sid": "",
+        "Principal": {
+          "Service": "ec2.amazonaws.com"
+        }
       }
-    }
-  ]
-}
-EOF
+    ]
+  }
+  EOF
 
 }
 
@@ -38,34 +41,46 @@ resource "aws_iam_role_policy" "role_policy" {
   name = "${var.name}-policy"
   role = aws_iam_role.iam_role.id
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DescribeInstances",
-        "iam:GetInstanceProfile"
-      ],
-      "Resource": [
-        "*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:AttachVolume",
-        "ec2:DetachVolume",
-        "ec2:DescribeVolumes"
-      ],
-      "Resource": [
-        "*"
-      ]
-    }
-  ]
-}
-EOF
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ec2:DescribeInstances",
+          "iam:GetInstanceProfile"
+        ],
+        "Resource": [
+          "*"
+        ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ec2:AttachVolume",
+          "ec2:CreateSnapshot",
+          "ec2:CreateTags",
+          "ec2:CreateVolume",
+          "ec2:DeleteSnapshot",
+          "ec2:DeleteTags",
+          "ec2:DeleteVolume",
+          "ec2:DescribeAvailabilityZones",
+          "ec2:DescribeInstances",
+          "ec2:DescribeSnapshots",
+          "ec2:DescribeTags",
+          "ec2:DescribeVolumes",
+          "ec2:DescribeVolumesModifications",
+          "ec2:DetachVolume",
+          "ec2:ModifyVolume"
+        ],
+        "Resource": [
+          "*"
+        ]
+      }
+    ]
+  }
+  EOF
 
 }
 

@@ -19,12 +19,13 @@ module "vpc" {
 }
 
 module "network" {
-  source         = "../vpc/network"
-  name           = var.name
-  vpc_id         = module.vpc.this.id
-  vpc_cidr       = module.vpc.this.cidr_block
-  azs            = var.azs
-  public_subnets = var.public_subnets
+  source                                  = "../vpc/network"
+  name                                    = var.name
+  vpc_id                                  = module.vpc.this.id
+  vpc_cidr                                = module.vpc.this.cidr_block
+  azs                                     = var.azs
+  public_subnets                          = var.public_subnets
+  transit_gateway_destination_cidr_blocks = var.transit_gateway_destination_cidr_blocks
 }
 
 module "bastion" {
@@ -79,6 +80,9 @@ module "green_zone" {
   key_name          = aws_key_pair.cluster_key_pair.key_name
   security_group_id = module.network.security_group_id
   kmaster           = module.kmaster.private_fqdn
+
+  transit_gateway_id                      = var.transit_gateway_id
+  transit_gateway_destination_cidr_blocks = var.transit_gateway_destination_cidr_blocks
 }
 
 module "net_zone" {
@@ -98,6 +102,9 @@ module "net_zone" {
   key_name          = aws_key_pair.cluster_key_pair.key_name
   security_group_id = module.network.security_group_id
   kmaster           = module.kmaster.private_fqdn
+
+  transit_gateway_id                      = var.transit_gateway_id
+  transit_gateway_destination_cidr_blocks = var.transit_gateway_destination_cidr_blocks
 }
 
 module "db_zone" {
@@ -138,6 +145,9 @@ module "spot_zone" {
 
   on_demand_base_capacity = var.spot_on_demand_base_capacity
   taints                  = "spotInstance=true:NoSchedule"
+
+  transit_gateway_id                      = var.transit_gateway_id
+  transit_gateway_destination_cidr_blocks = var.transit_gateway_destination_cidr_blocks
 }
 
 module "admin_zone" {

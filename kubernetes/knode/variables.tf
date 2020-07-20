@@ -88,3 +88,12 @@ variable "volume_size" {
 variable "taints" {
   default = ""
 }
+
+// transit gateway
+variable "transit_gateway_id" {
+  default = null
+}
+variable "transit_gateway_destination_cidr_blocks" {
+  type    = list(string)
+  default = []
+}

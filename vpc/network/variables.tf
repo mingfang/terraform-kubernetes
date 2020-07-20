@@ -14,3 +14,8 @@ variable "azs" {
 variable "public_subnets" {
   type = list(string)
 }
+
+variable "transit_gateway_destination_cidr_blocks" {
+  type    = list(string)
+  default = []
+}

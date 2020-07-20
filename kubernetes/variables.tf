@@ -192,3 +192,12 @@ variable "peering_subnets" {
   type    = list(string)
   default = ["10.248.1.0/32", "10.248.1.10/32", "10.248.1.0/24"]
 }
+
+// transit gateway
+variable "transit_gateway_id" {
+  default = null
+}
+variable "transit_gateway_destination_cidr_blocks" {
+  type    = list(string)
+  default = []
+}
