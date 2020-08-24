@@ -16,10 +16,6 @@ variable "nat_gateway_ids" {
   type = list(string)
 }
 
-variable "nat_support" {
-  default = true
-}
-
 variable "transit_gateway_id" {
   default = null
 }

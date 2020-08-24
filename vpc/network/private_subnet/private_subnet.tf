@@ -11,7 +11,7 @@ resource "aws_subnet" "subnets" {
 }
 
 resource "aws_route_table" "route_tables" {
-  count  = var.enable && var.nat_support ? length(var.azs) : 0
+  count  = var.enable && length(var.nat_gateway_ids) > 0 ? length(var.azs) : 0
   vpc_id = var.vpc_id
 
   tags = {
@@ -20,7 +20,7 @@ resource "aws_route_table" "route_tables" {
 }
 
 resource "aws_route" "nat" {
-  count          = var.enable && var.nat_support ? length(var.azs) : 0
+  count          = var.enable && length(var.nat_gateway_ids) > 0 ? length(var.azs) : 0
   route_table_id = aws_route_table.route_tables[count.index].id
 
   nat_gateway_id         = var.nat_gateway_ids[count.index]
@@ -37,7 +37,7 @@ resource "aws_route" "transit_gateway" {
 }
 
 resource "aws_route_table_association" "route_association" {
-  count          = var.enable && var.nat_support ? length(var.azs) : 0
+  count          = var.enable && length(var.nat_gateway_ids) > 0 ? length(var.azs) : 0
   subnet_id      = aws_subnet.subnets.*.id[count.index]
   route_table_id = aws_route_table.route_tables.*.id[count.index]
 }
