@@ -37,7 +37,6 @@ systemctl daemon-reload
 systemctl restart docker --ignore-dependencies
 systemctl status docker
 until systemctl -q is-active docker; do echo "Waiting for Docker to start..."; sleep 3; done
-curl --proxy proxy.build.kkr.com:80 google.com
 
 #start
 
