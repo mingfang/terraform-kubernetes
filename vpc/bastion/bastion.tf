@@ -1,35 +1,6 @@
-# Variables
-
-variable "name" {
+data "aws_vpc" "vpc" {
+  id = var.vpc_id
 }
-
-variable "enable" {
-  default = true
-}
-
-variable "vpc_id" {
-}
-
-variable "vpc_cidr" {
-}
-
-variable "key_name" {
-}
-
-variable "subnet_id" {
-}
-
-variable "instance_type" {
-  default = "t2.micro"
-}
-
-variable "image_id" {
-}
-
-variable "route53_zone_id" {
-}
-
-# Resources
 
 data "template_file" "start" {
   template = file("${path.module}/start.sh")
@@ -50,7 +21,7 @@ resource "aws_security_group" "bastion" {
     protocol    = "tcp"
     from_port   = 22
     to_port     = 22
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = [data.aws_vpc.vpc.cidr_block]
   }
 
   tags = {
@@ -69,7 +40,7 @@ resource "aws_instance" "bastion" {
   subnet_id                   = var.subnet_id
   key_name                    = var.key_name
   vpc_security_group_ids      = [aws_security_group.bastion.id]
-  associate_public_ip_address = true
+  associate_public_ip_address = var.associate_public_ip_address
 
   credit_specification {
     cpu_credits = "standard"
@@ -96,12 +67,5 @@ resource "aws_route53_record" "bastion" {
   zone_id = var.route53_zone_id
   type    = "CNAME"
   ttl     = "300"
-  records = [aws_instance.bastion.0.public_dns]
+  records = [var.associate_public_ip_address ? aws_instance.bastion.0.public_dns : aws_instance.bastion.0.private_dns]
 }
-
-# Outputs
-
-output "fqdn" {
-  value = var.enable && length(aws_route53_record.bastion) > 0 ? aws_route53_record.bastion.0.fqdn : ""
-}
-
