@@ -1,29 +1,14 @@
-variable "name" {
-}
+variable "name" {}
 
-variable "region" {
-}
+variable "region" {}
 
-variable "vpc_id" {
-}
+variable "vpc_id" {}
 
-variable "security_group_ids" {
-  type = list(string)
-}
+variable "subnet_ids" {}
 
-variable "azs" {
-  type = list(string)
-}
+variable "dns_name" {}
 
-variable "subnets" {
-  type = list(string)
-}
-
-variable "dns_name" {
-}
-
-variable "route53_zone_id" {
-}
+variable "route53_zone_id" {}
 
 variable "performance_mode" {
   default = "generalPurpose"
