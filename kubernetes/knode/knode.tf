@@ -1,14 +1,5 @@
-module "subnets" {
-  source          = "../../vpc/network/private_subnet"
-  enable          = var.size > 0
-  name            = var.name
-  cidrs           = var.subnets
-  vpc_id          = var.vpc_id
-  azs             = var.azs
-  nat_gateway_ids = var.nat_ids
-
-  transit_gateway_id                      = var.transit_gateway_id
-  transit_gateway_destination_cidr_blocks = var.transit_gateway_destination_cidr_blocks
+data "aws_vpc" "vpc" {
+  id = var.vpc_id
 }
 
 resource "aws_iam_role" "iam_role" {
@@ -84,60 +75,33 @@ resource "aws_iam_role_policy" "role_policy" {
 
 }
 
-module "alb" {
-  source                  = "../../vpc/alb"
-  enable                  = var.alb_enable
-  name                    = var.name
-  vpc_id                  = var.vpc_id
-  subnet_ids              = var.alb_subnet_ids
-  internal                = var.alb_internal
-  dns_name_private        = var.alb_dns_name_private
-  route53_zone_id_private = var.alb_route53_zone_id_private
-  dns_names_public        = var.alb_dns_names_public
-  route53_zone_id_public  = var.alb_route53_zone_id_public
+locals {
+  docker_conf = templatefile("${path.module}/docker.conf", {
+    insecure_registry = var.insecure_registry
+    environments      = var.environments
+  })
 
-  listeners_count = 2
-
-  listeners = [
-    {
-      port         = 80
-      protocol     = "HTTP"
-      health_check = "/lbstatus"
-    },
-    {
-      port            = 443
-      protocol        = "HTTPS"
-      health_check    = "/lbstatus"
-      certificate_arn = var.certificate_arn
-    },
-  ]
-}
-
-data "template_file" "start" {
-  template = file("${path.module}/start.sh")
-
-  vars = {
-    role    = var.zone
-    kmaster = var.kmaster
-    taints  = var.taints
-  }
+  start_sh = templatefile("${path.module}/start.sh", {
+    role        = var.zone
+    kmaster     = var.kmaster
+    taints      = var.taints
+    docker_conf = local.docker_conf
+  })
 }
 
 resource "aws_launch_template" "this" {
-  count         = var.size > 0 ? 1 : 0
   name_prefix   = "${var.name}-"
   instance_type = var.instance_type
   image_id      = var.image_id
   key_name      = var.key_name
-  user_data     = base64encode(data.template_file.start.rendered)
-
+  user_data     = base64encode(local.start_sh)
   iam_instance_profile {
     name = aws_iam_instance_profile.instance_profile.name
   }
 
   network_interfaces {
     associate_public_ip_address = false
-    security_groups             = [var.security_group_id]
+    security_groups             = var.security_group_ids
     delete_on_termination       = true
   }
 
@@ -156,16 +120,15 @@ resource "aws_launch_template" "this" {
   }
 }
 
-resource "aws_autoscaling_group" "this" {
-  count                     = var.size > 0 ? 1 : 0
+resource "aws_autoscaling_group" "asg" {
   name_prefix               = "${var.name}-"
   desired_capacity          = var.size
   min_size                  = var.size
   max_size                  = var.size
   default_cooldown          = 60
   health_check_grace_period = 60
-  vpc_zone_identifier       = module.subnets.ids
-  target_group_arns         = module.alb.target_group_arns
+  vpc_zone_identifier       = var.subnet_ids
+  target_group_arns         = var.target_group_arns
 
   mixed_instances_policy {
     instances_distribution {
@@ -175,7 +138,7 @@ resource "aws_autoscaling_group" "this" {
 
     launch_template {
       launch_template_specification {
-        launch_template_id = aws_launch_template.this[0].id
+        launch_template_id = aws_launch_template.this.id
         version            = "$Latest"
       }
     }

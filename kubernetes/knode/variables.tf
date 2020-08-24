@@ -1,37 +1,24 @@
+variable "name" {}
 
-variable "name" {
-}
+variable "vpc_id" {}
 
-variable "vpc_id" {
-}
+variable "key_name" {}
 
-variable "vpc_cidr" {
-}
-
-variable "key_name" {
-}
-
-variable "azs" {
+variable "subnet_ids" {
   type = list(string)
 }
 
-variable "subnets" {
-  type = list(string)
-}
+variable "instance_type" {}
 
-variable "nat_ids" {
-  type = list(string)
-}
+variable "image_id" {}
 
-variable "instance_type" {
-}
+variable "kmaster" {}
 
-variable "zone" {
-}
+variable "volume_size" {}
 
-variable "size" {
-}
+variable "zone" {}
 
+variable "size" {}
 
 variable "on_demand_base_capacity" {
   type        = number
@@ -39,54 +26,17 @@ variable "on_demand_base_capacity" {
   description = "Setting on_demand_base_capacity < size would result in (size - on_demand_base_capacity) spot instances; null == no spot"
 }
 
-variable "alb_enable" {
-  default = false
-}
-
-variable "alb_internal" {
-  default = true
-}
-
-variable "alb_dns_name_private" {
-  default = ""
-}
-
-variable "alb_dns_names_public" {
-  type    = list(string)
+variable "target_group_arns" {
   default = []
-}
-
-variable "alb_route53_zone_id_private" {
-  default = ""
-}
-
-variable "alb_route53_zone_id_public" {
-  default = ""
-}
-
-variable "alb_subnet_ids" {
-  type    = list(string)
-  default = []
-}
-
-variable "security_group_id" {
-}
-
-variable "image_id" {
-}
-
-variable "kmaster" {
-}
-
-variable "certificate_arn" {
-  default = ""
-}
-
-variable "volume_size" {
+  description = "ALB target_group_arns"
 }
 
 variable "taints" {
   default = ""
+}
+
+variable "nat_ids" {
+  type = list(string)
 }
 
 // transit gateway
@@ -94,6 +44,18 @@ variable "transit_gateway_id" {
   default = null
 }
 variable "transit_gateway_destination_cidr_blocks" {
-  type    = list(string)
   default = []
+}
+
+variable "security_group_ids" {
+  default = []
+  description = "add EFS security group"
+}
+
+// start.sh
+variable "environments" {
+  default = []
+}
+variable "insecure_registry" {
+  default = null
 }

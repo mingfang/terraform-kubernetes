@@ -1,46 +1,41 @@
-variable "name" {
-}
+variable "name" {}
 
-variable "vpc_id" {
-}
+variable "vpc_id" {}
 
-variable "vpc_cidr" {
-}
+variable "key_name" {}
 
-variable "key_name" {
-}
-
-variable "azs" {
+variable "subnet_ids" {
   type = list(string)
 }
 
-variable "subnets" {
-  type = list(string)
-}
+variable "instance_type" {}
 
-variable "nat_ids" {
-  type = list(string)
-}
+variable "image_id" {}
 
-variable "instance_type" {
-}
+variable "efs_dns_name" {}
 
-variable "image_id" {
-}
-
-variable "efs_dns_name" {
-  default = ""
-}
-
-variable "alb_route53_zone_id_private" {
-  default = ""
-}
-
-variable "alb_route53_zone_id_public" {
-  default = ""
-}
-
-variable "alb_subnet_ids" {
-  type    = list(string)
+variable "security_group_ids" {
   default = []
+  description = "add EFS security group"
+}
+
+// Load Balancers
+variable "lb_public_fqdn" {
+  description = "public Route53 name"
+}
+variable "lb_private_fqdn" {
+  description = "private Route53 name"
+}
+variable "target_group_arns" {
+  description = "LB target_group_arns"
+}
+
+// start.sh
+variable "environments" {
+  default = []
+  description = "Docker daemon conf"
+}
+variable "insecure_registry" {
+  default = null
+  description = "Docker daemon conf"
 }

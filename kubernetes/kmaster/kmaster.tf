@@ -1,30 +1,25 @@
-module "subnets" {
-  source          = "../../vpc/network/private_subnet"
-  name            = var.name
-  cidrs           = var.subnets
-  vpc_id          = var.vpc_id
-  azs             = var.azs
-  nat_gateway_ids = var.nat_ids
+data "aws_vpc" "vpc" {
+  id = var.vpc_id
 }
 
 resource "aws_iam_role" "iam_role" {
   name = "${var.name}-role"
 
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "sts:AssumeRole",
-      "Sid": "",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
+  assume_role_policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": "sts:AssumeRole",
+        "Sid": "",
+        "Principal": {
+          "Service": "ec2.amazonaws.com"
+        }
       }
-    }
-  ]
-}
-EOF
+    ]
+  }
+  EOF
 
 }
 
@@ -37,164 +32,46 @@ resource "aws_iam_role_policy" "role_policy" {
   name = "${var.name}-policy"
   role = aws_iam_role.iam_role.id
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DescribeInstances",
-        "iam:GetInstanceProfile"
-      ],
-      "Resource": [
-        "*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:PutObject"
-      ],
-      "Resource": [
-        "*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:AttachVolume",
-        "ec2:DetachVolume",
-        "ec2:DescribeVolumes"
-      ],
-      "Resource": [
-        "*"
-      ]
-    }
-  ]
-}
-EOF
-
-}
-
-resource "aws_elb" "public" {
-  name                        = "${var.name}-public-elb"
-  subnets                     = var.alb_subnet_ids
-  cross_zone_load_balancing   = true
-  idle_timeout                = 500
-  connection_draining         = true
-  connection_draining_timeout = 10
-  security_groups             = [aws_security_group.elb_sg.id]
-
-  //API Server
-  listener {
-    instance_port     = 6443
-    instance_protocol = "tcp"
-    lb_port           = 6443
-    lb_protocol       = "tcp"
-  }
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    target              = "TCP:6443"
-    interval            = 10
-  }
-}
-
-resource "aws_elb" "private" {
-  name                        = "${var.name}-private-elb"
-  subnets                     = module.subnets.ids
-  internal                    = true
-  cross_zone_load_balancing   = true
-  idle_timeout                = 500
-  connection_draining         = true
-  connection_draining_timeout = 10
-  security_groups             = [aws_security_group.elb_sg.id]
-
-  //API Server
-  listener {
-    instance_port     = 6443
-    instance_protocol = "tcp"
-    lb_port           = 6443
-    lb_protocol       = "tcp"
-  }
-
-  //Vault
-  listener {
-    instance_port     = 8200
-    instance_protocol = "tcp"
-    lb_port           = 8200
-    lb_protocol       = "tcp"
-  }
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    target              = "TCP:6443"
-    interval            = 10
-  }
-}
-
-resource "aws_security_group" "elb_sg" {
-  name   = "${var.name}-elb-sg"
-  vpc_id = var.vpc_id
-
-  ingress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
-
-    cidr_blocks = [
-      "0.0.0.0/0",
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ec2:DescribeInstances",
+          "iam:GetInstanceProfile"
+        ],
+        "Resource": [
+          "*"
+        ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject"
+        ],
+        "Resource": [
+          "*"
+        ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ec2:AttachVolume",
+          "ec2:DetachVolume",
+          "ec2:DescribeVolumes"
+        ],
+        "Resource": [
+          "*"
+        ]
+      }
     ]
   }
-
-  egress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
-
-    cidr_blocks = [
-      "0.0.0.0/0",
-    ]
-  }
-
-  tags = {
-    Name = "${var.name}-elb-sg"
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
+  EOF
 }
 
-resource "aws_route53_record" "private" {
-  zone_id = var.alb_route53_zone_id_private
-  name    = "kmaster"
-  type    = "A"
-
-  alias {
-    name                   = aws_elb.private.dns_name
-    zone_id                = aws_elb.private.zone_id
-    evaluate_target_health = true
-  }
-}
-
-resource "aws_route53_record" "public" {
-  name    = "kmaster"
-  zone_id = var.alb_route53_zone_id_public
-  type    = "A"
-
-  alias {
-    name                   = aws_elb.public.dns_name
-    zone_id                = aws_elb.public.zone_id
-    evaluate_target_health = true
-  }
-}
-
+/* S3 Bucket for kmaster keys */
 resource "aws_s3_bucket" "keys" {
   bucket_prefix = "${var.name}-keys-"
   acl           = "private"
@@ -208,18 +85,33 @@ resource "aws_s3_bucket" "keys" {
     }
   }
 }
+resource "aws_s3_bucket_public_access_block" "keys" {
+  bucket = aws_s3_bucket.keys.id
 
-data "template_file" "start" {
-  template = file("${path.module}/start.sh")
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
 
-  vars = {
+locals {
+  docker_conf = templatefile("${path.module}/docker.conf", {
+    insecure_registry = var.insecure_registry
+    environments      = var.environments
+  })
+
+  start_sh = templatefile("${path.module}/start.sh", {
     vpc_id            = var.vpc_id
     efs_dns_name      = var.efs_dns_name
     bucket            = aws_s3_bucket.keys.id
     iam_role          = aws_iam_role.iam_role.id
-    kubernetes_master = "https://${aws_route53_record.public.fqdn}:6443"
-    alt_names         = "${aws_route53_record.private.fqdn},${aws_route53_record.public.fqdn},${aws_elb.public.dns_name}"
-  }
+    kubernetes_master = "https://${var.lb_public_fqdn}:6443"
+    alt_names = join(",", compact([
+      var.lb_private_fqdn,
+      var.lb_public_fqdn,
+    ]))
+    docker_conf = local.docker_conf
+  })
 }
 
 resource "aws_launch_configuration" "lc" {
@@ -227,9 +119,9 @@ resource "aws_launch_configuration" "lc" {
   instance_type               = var.instance_type
   image_id                    = var.image_id
   key_name                    = var.key_name
-  security_groups             = [aws_security_group.sg.id]
+  security_groups             = concat([aws_security_group.sg.id], var.security_group_ids)
   associate_public_ip_address = false
-  user_data                   = data.template_file.start.rendered
+  user_data                   = local.start_sh
   iam_instance_profile        = aws_iam_instance_profile.instance_profile.name
 
   root_block_device {
@@ -251,8 +143,8 @@ resource "aws_autoscaling_group" "asg" {
   default_cooldown          = 60
   health_check_grace_period = 60
   launch_configuration      = aws_launch_configuration.lc.name
-  vpc_zone_identifier       = module.subnets.ids
-  load_balancers            = [aws_elb.private.id, aws_elb.public.id]
+  vpc_zone_identifier       = var.subnet_ids
+  target_group_arns         = var.target_group_arns
 
   tag {
     key                 = "Name"
@@ -272,47 +164,47 @@ resource "aws_security_group" "sg" {
     protocol    = -1
     from_port   = 0
     to_port     = 0
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = [data.aws_vpc.vpc.cidr_block]
   }
 
   ingress {
-    protocol    = "tcp"
+    protocol    = "TCP"
     from_port   = 6443
     to_port     = 6443
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = ["0.0.0.0/0"]
     description = "kmaster"
   }
 
   ingress {
-    protocol    = "tcp"
+    protocol    = "TCP"
     from_port   = 8200
     to_port     = 8200
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = [data.aws_vpc.vpc.cidr_block]
     description = "vault"
   }
 
   ingress {
-    protocol    = "tcp"
+    protocol    = "TCP"
     from_port   = 10250
     to_port     = 10250
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = [data.aws_vpc.vpc.cidr_block]
     description = "metrics"
   }
 
   //SSH
   ingress {
-    protocol    = "tcp"
+    protocol    = "TCP"
     from_port   = 22
     to_port     = 22
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = [data.aws_vpc.vpc.cidr_block]
   }
 
   //EFS
   egress {
-    protocol    = "tcp"
+    protocol    = "TCP"
     from_port   = 2049
     to_port     = 2049
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = [data.aws_vpc.vpc.cidr_block]
     description = "EFS"
   }
 

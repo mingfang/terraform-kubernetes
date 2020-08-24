@@ -25,6 +25,20 @@ ln -s /mnt/data/kmaster/{etcd-data,vault-data,pki-data} ~root/docker-kubernetes-
 
 cd ~root/docker-kubernetes-node
 
+# Docker Conf
+
+mkdir -p /etc/systemd/system/docker.service.d
+cat << EOF > /etc/systemd/system/docker.service.d/docker.conf
+${docker_conf}
+EOF
+cat /etc/systemd/system/docker.service.d/docker.conf
+echo "Restarting Docker..."
+systemctl daemon-reload
+systemctl restart docker --ignore-dependencies
+systemctl status docker
+until systemctl -q is-active docker; do echo "Waiting for Docker to start..."; sleep 3; done
+curl --proxy proxy.build.kkr.com:80 google.com
+
 #start
 
 export REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -c -r .region)
