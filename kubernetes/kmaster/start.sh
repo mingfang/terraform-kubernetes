@@ -2,6 +2,19 @@
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
+# Docker Conf
+
+mkdir -p /etc/systemd/system/docker.service.d
+cat << EOF > /etc/systemd/system/docker.service.d/docker.conf
+${docker_conf}
+EOF
+cat /etc/systemd/system/docker.service.d/docker.conf
+echo "Restarting Docker..."
+systemctl daemon-reload
+systemctl restart docker --ignore-dependencies
+systemctl status docker
+until systemctl -q is-active docker; do echo "Waiting for Docker to start..."; sleep 3; done
+
 export EFS_DNS_NAME="${efs_dns_name}"
 export VPC_ID="${vpc_id}"
 export ALT_NAMES="${alt_names}"
@@ -24,19 +37,6 @@ rm -r ~root/docker-kubernetes-master/{etcd-data,vault-data,pki-data}
 ln -s /mnt/data/kmaster/{etcd-data,vault-data,pki-data} ~root/docker-kubernetes-master
 
 cd ~root/docker-kubernetes-node
-
-# Docker Conf
-
-mkdir -p /etc/systemd/system/docker.service.d
-cat << EOF > /etc/systemd/system/docker.service.d/docker.conf
-${docker_conf}
-EOF
-cat /etc/systemd/system/docker.service.d/docker.conf
-echo "Restarting Docker..."
-systemctl daemon-reload
-systemctl restart docker --ignore-dependencies
-systemctl status docker
-until systemctl -q is-active docker; do echo "Waiting for Docker to start..."; sleep 3; done
 
 #start
 

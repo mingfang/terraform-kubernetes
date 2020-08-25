@@ -2,6 +2,19 @@
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
+# Docker Conf
+
+mkdir -p /etc/systemd/system/docker.service.d
+cat << EOF > /etc/systemd/system/docker.service.d/docker.conf
+${docker_conf}
+EOF
+cat /etc/systemd/system/docker.service.d/docker.conf
+echo "Restarting Docker..."
+systemctl daemon-reload
+systemctl restart docker --ignore-dependencies
+systemctl status docker
+until systemctl -q is-active docker; do echo "Waiting for Docker to start..."; sleep 3; done
+
 export KMASTER="${kmaster}"
 export TAINTS="${taints}"
 
@@ -35,19 +48,6 @@ export KUBELET_TOKEN=$(echo $KUBELET_TOKEN_CURL | jq -r .wrap_info.token)
 
 PROXY_TOKEN_CURL=$(curl -s -X POST -H "X-Vault-Token: $VAULT_TOKEN" -H "X-Vault-Wrap-Ttl: 1m0s" -d '{"ttl":"1m0s","explicit_max_ttl":"0s","period":"0s","no_parent":true,"display_name":"","num_uses":0,"renewable":true,"type":"service"}' $VAULT_ADDR/v1/auth/token/create/proxy)
 export PROXY_TOKEN=$(echo $PROXY_TOKEN_CURL | jq -r .wrap_info.token)
-
-# Docker Conf
-
-mkdir -p /etc/systemd/system/docker.service.d
-cat << EOF > /etc/systemd/system/docker.service.d/docker.conf
-${docker_conf}
-EOF
-cat /etc/systemd/system/docker.service.d/docker.conf
-echo "Restarting Docker..."
-systemctl daemon-reload
-systemctl restart docker --ignore-dependencies
-systemctl status docker
-until systemctl -q is-active docker; do echo "Waiting for Docker to start..."; sleep 3; done
 
 #start
 
