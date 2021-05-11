@@ -68,12 +68,13 @@ resource "aws_security_group_rule" "vpc-egress-transit-gateway" {
   cidr_blocks = var.transit_gateway_destination_cidr_blocks
 }
 
-resource "aws_security_group" "all" {
-  name   = "${var.name}-all"
+resource "aws_security_group" "web" {
+  name   = "${var.name}-web"
   vpc_id = var.vpc_id
 
+
   tags = {
-    Name = "${var.name}-all"
+    Name = "${var.name}-web"
   }
 
   lifecycle {
@@ -81,9 +82,9 @@ resource "aws_security_group" "all" {
   }
 }
 
-resource "aws_security_group_rule" "all-ingress-80" {
+resource "aws_security_group_rule" "web-ingress-80" {
   type              = "ingress"
-  security_group_id = aws_security_group.all.id
+  security_group_id = aws_security_group.web.id
 
   from_port   = 80
   to_port     = 80
@@ -91,9 +92,9 @@ resource "aws_security_group_rule" "all-ingress-80" {
   cidr_blocks = ["0.0.0.0/0"]
 }
 
-resource "aws_security_group_rule" "all-ingress-443" {
+resource "aws_security_group_rule" "web-ingress-443" {
   type              = "ingress"
-  security_group_id = aws_security_group.all.id
+  security_group_id = aws_security_group.web.id
 
   from_port   = 443
   to_port     = 443
