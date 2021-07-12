@@ -68,6 +68,20 @@ resource "aws_iam_role_policy" "role_policy" {
         "Resource": [
           "*"
         ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "kms:CreateGrant",
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:Describe*"
+        ],
+        "Resource": [
+          "*"
+        ]
       }
     ]
   }
