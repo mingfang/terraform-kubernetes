@@ -27,3 +27,7 @@ variable "dns_names" {
   type    = list(string)
   default = []
 }
+
+variable "idle_timeout" {
+  default = 60
+}

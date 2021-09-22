@@ -44,6 +44,7 @@ resource "aws_lb" "lb" {
   internal           = var.internal
   subnets            = var.subnet_ids
   security_groups    = var.load_balancer_type == "application" ? [aws_security_group.sg[0].id] : null
+  idle_timeout       = var.load_balancer_type == "application" ? var.idle_timeout : null
   enable_cross_zone_load_balancing = var.load_balancer_type == "network"
 }
 
