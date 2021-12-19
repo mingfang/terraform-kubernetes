@@ -2,7 +2,6 @@
 .terraform
 *.pem
 *.pub
-*.tfvars
-*.tfvars.json
+aws_credentials
 *.tfstate
 *.tfstate.backup

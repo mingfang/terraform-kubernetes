@@ -88,37 +88,4 @@ resource "aws_security_group" "sg" {
   }
 }
 
-resource "null_resource" "packer" {
-  triggers = {
-    ami_name = var.ami_name
-  }
-
-  provisioner "local-exec" {
-    environment = {
-      AWS_SHARED_CREDENTIALS_FILE = var.AWS_SHARED_CREDENTIALS_FILE
-    }
-    command = <<-EOF
-      packer build \
-        -var "region=${var.region}" \
-        -var "vpc_id=${aws_vpc.vpc.id}" \
-        -var "subnet_id=${aws_subnet.subnet.id}" \
-        -var "ami_name=${var.ami_name}" \
-        ${path.module}/kubernetes-ami.json
-      EOF
-  }
-}
-
-#Output
-
-output "region" {
-  value = var.region
-}
-
-output "vpc_id" {
-  value = aws_vpc.vpc.id
-}
-
-output "subnet_id" {
-  value = aws_subnet.subnet.id
-}
 

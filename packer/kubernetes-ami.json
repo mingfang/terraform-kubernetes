@@ -22,7 +22,7 @@
       "force_delete_snapshot": "true",
       "associate_public_ip_address": "true",
       "type": "amazon-ebs",
-      "instance_type": "t3a.micro",
+      "instance_type": "t3a.medium",
       "ssh_username": "ubuntu",
       "source_ami_filter": {
         "filters": {
@@ -58,7 +58,9 @@
         "cd docker-kubernetes-master && ./build",
         "cd ~root",
         "git clone --depth 1 https://github.com/mingfang/docker-kubernetes-node.git",
-        "cd docker-kubernetes-node && ./build"
+        "cd docker-kubernetes-node && ./build",
+
+        "apt-get -y autoremove"
       ]
     }
   ]
