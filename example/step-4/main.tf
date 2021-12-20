@@ -1,0 +1,3 @@
+module "nginx" {
+  source = "./nginx"
+}

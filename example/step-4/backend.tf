@@ -3,7 +3,7 @@
 terraform {
   backend "s3" {
     # key must be different for each step-#
-    key = "step-1/terraform.tfstate"
+    key = "step-4/terraform.tfstate"
 
     # everything below must be same for all steps
     bucket         = "example123-terraform-state"
