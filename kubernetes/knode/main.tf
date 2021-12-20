@@ -32,61 +32,7 @@ resource "aws_iam_role_policy" "role_policy" {
   name = "${var.name}-policy"
   role = aws_iam_role.iam_role.id
 
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Action": [
-          "ec2:DescribeInstances",
-          "iam:GetInstanceProfile"
-        ],
-        "Resource": [
-          "*"
-        ]
-      },
-      {
-        "Effect": "Allow",
-        "Action": [
-          "ec2:AttachVolume",
-          "ec2:CreateSnapshot",
-          "ec2:CreateTags",
-          "ec2:CreateVolume",
-          "ec2:DeleteSnapshot",
-          "ec2:DeleteTags",
-          "ec2:DeleteVolume",
-          "ec2:DescribeAvailabilityZones",
-          "ec2:DescribeInstances",
-          "ec2:DescribeSnapshots",
-          "ec2:DescribeTags",
-          "ec2:DescribeVolumes",
-          "ec2:DescribeVolumesModifications",
-          "ec2:DetachVolume",
-          "ec2:ModifyVolume"
-        ],
-        "Resource": [
-          "*"
-        ]
-      },
-      {
-        "Effect": "Allow",
-        "Action": [
-          "kms:CreateGrant",
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*",
-          "kms:Describe*"
-        ],
-        "Resource": [
-          "*"
-        ]
-      }
-    ]
-  }
-  EOF
-
+  policy = file("${path.module}/iam-policy.json")
 }
 
 locals {
@@ -104,7 +50,7 @@ locals {
 }
 
 resource "aws_launch_template" "this" {
-  name_prefix   = "${var.name}-"
+  name_prefix   = "${var.name}-${var.instance_type}"
   instance_type = var.instance_type
   image_id      = var.image_id
   key_name      = var.key_name
@@ -115,17 +61,17 @@ resource "aws_launch_template" "this" {
 
   network_interfaces {
     associate_public_ip_address = false
-    security_groups             = var.security_group_ids
     delete_on_termination       = true
+    security_groups             = var.security_group_ids
   }
 
   block_device_mappings {
     device_name = "/dev/sda1"
 
     ebs {
+      delete_on_termination = "true"
       volume_size           = var.volume_size
       volume_type           = "gp2"
-      delete_on_termination = "true"
     }
   }
 
@@ -137,8 +83,8 @@ resource "aws_launch_template" "this" {
 resource "aws_autoscaling_group" "asg" {
   name_prefix               = "${var.name}-"
   desired_capacity          = var.size
-  min_size                  = var.size
-  max_size                  = var.size
+  min_size                  = var.min_size != null ? var.min_size : var.size
+  max_size                  = var.max_size != null ? var.max_size : var.size
   default_cooldown          = 60
   health_check_grace_period = 60
   vpc_zone_identifier       = var.subnet_ids
@@ -162,6 +108,42 @@ resource "aws_autoscaling_group" "asg" {
     key                 = "Name"
     value               = var.name
     propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "kubernetes.io/cluster/${var.cluster_name}"
+    value               = ""
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/enabled"
+    value               = ""
+    propagate_at_launch = false
+  }
+
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/${var.cluster_name}"
+    value               = ""
+    propagate_at_launch = false
+  }
+
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/node-template/label/kubernetes.io/os"
+    value               = "linux"
+    propagate_at_launch = false
+  }
+
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/node-template/label/zone"
+    value               = var.zone
+    propagate_at_launch = false
+  }
+
+  tag {
+    key                 = "k8s.io/cluster-autoscaler/node-template/label/role"
+    value               = var.zone
+    propagate_at_launch = false
   }
 
   lifecycle {

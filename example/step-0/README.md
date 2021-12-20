@@ -1,19 +1,25 @@
-# Create S3 bucket and DynamoDB locking table for Terraform S3 Backend
 
-1 - Must create the S3 bucket before initialing the backend.
-```shell script
-mv backend.tf backend.tf.save
-terraform init
-terraform apply
-```
+# Module `example/step-0`
 
-2- initialize backend
-```shell script
-mv backend.tf.save backend.tf
-terraform init -force-copy
-rm *.tfstate*
-```
+Provider Requirements:
+* **aws:** (any version)
+* **local:** (any version)
 
-3- copy the backend.tf to the other steps. MUST CHANGE THE KEY FIELD
+## Input Variables
+* `azs` (required)
+* `cluster_name` (required): the name of this cluster
+* `region` (required): choose your region
 
+## Output Values
+* `azs`
+* `cluster_name`
+* `region`
+
+## Managed Resources
+* `aws_dynamodb_table.terraform_locks` from `aws`
+* `aws_s3_bucket.terraform_state` from `aws`
+* `aws_s3_bucket_public_access_block.terraform_state` from `aws`
+* `local_file.step-0-tfvars` from `local`
+* `local_file.step-0-variables` from `local`
+* `local_file.step-N-backend` from `local`
 

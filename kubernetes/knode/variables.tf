@@ -1,5 +1,7 @@
 variable "name" {}
 
+variable "cluster_name" {}
+
 variable "vpc_id" {}
 
 variable "key_name" {}
@@ -18,7 +20,17 @@ variable "volume_size" {}
 
 variable "zone" {}
 
-variable "size" {}
+variable "size" {
+  default = 0
+}
+
+variable "min_size" {
+  default = null
+}
+
+variable "max_size" {
+  default = null
+}
 
 variable "on_demand_base_capacity" {
   type        = number
@@ -27,7 +39,7 @@ variable "on_demand_base_capacity" {
 }
 
 variable "target_group_arns" {
-  default = []
+  default     = []
   description = "ALB target_group_arns"
 }
 
@@ -48,7 +60,7 @@ variable "transit_gateway_destination_cidr_blocks" {
 }
 
 variable "security_group_ids" {
-  default = []
+  default     = []
   description = "add EFS security group"
 }
 

@@ -21,5 +21,5 @@ variable "provisioned_throughput_in_mibps" {
 
 variable transition_to_ia {
   type    = string
-  default = null
+  default = "AFTER_7_DAYS"
 }

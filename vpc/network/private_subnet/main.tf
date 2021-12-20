@@ -5,9 +5,12 @@ resource "aws_subnet" "subnets" {
   availability_zone       = element(var.azs, count.index)
   map_public_ip_on_launch = false
 
-  tags = {
-    Name = "${var.name}.${var.azs[count.index]}"
-  }
+  tags = merge(
+    {
+      Name = "${var.name}.${var.azs[count.index]}"
+    },
+    var.tags
+  )
 }
 
 resource "aws_route_table" "route_tables" {

@@ -1,5 +1,7 @@
 variable "name" {}
 
+variable "cluster_name" {}
+
 variable "vpc_id" {}
 
 variable "key_name" {}
@@ -15,7 +17,7 @@ variable "image_id" {}
 variable "efs_dns_name" {}
 
 variable "security_group_ids" {
-  default = []
+  default     = []
   description = "add EFS security group"
 }
 
@@ -32,10 +34,14 @@ variable "target_group_arns" {
 
 // start.sh
 variable "environments" {
-  default = []
+  default     = []
   description = "Docker daemon conf"
 }
 variable "insecure_registry" {
-  default = null
+  default     = null
   description = "Docker daemon conf"
+}
+
+variable "use_spot" {
+  default = false
 }

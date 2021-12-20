@@ -1,24 +1,23 @@
 variable "name" {
+  description = "the name of this cluster"
 }
+
+variable "cidr" {}
+variable "public_subnets" {}
+variable "private_subnets" {}
 
 variable "public_domain" {
+  description = "you public domain, e.g. example.com"
 }
 
-variable "region" {
+variable "ami_name" {}
+variable "public_key_path" {}
+
+
+variable "transit_gateway_destination_cidr_blocks" {}
+variable "efs_provisioned_throughput_in_mibps" {}
+variable "efs_transition_to_ia" {
+  type = string
 }
 
-variable "azs" {
-  type = list(string)
-}
 
-variable "access_key" {
-}
-
-variable "secret_key" {
-}
-
-variable "ami_name" {
-}
-
-variable "public_key_path" {
-}

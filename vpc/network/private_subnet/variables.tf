@@ -13,7 +13,8 @@ variable "azs" {
 }
 
 variable "nat_gateway_ids" {
-  type = list(string)
+  type    = list(string)
+  default = []
 }
 
 variable "transit_gateway_id" {
@@ -26,4 +27,8 @@ variable "transit_gateway_destination_cidr_blocks" {
 
 variable "enable" {
   default = true
+}
+
+variable "tags" {
+  default = {}
 }

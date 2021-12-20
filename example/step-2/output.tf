@@ -1,3 +1,3 @@
-output "cluster" {
-  value = module.kubernetes
+output "bastion" {
+  value = module.bastion
 }

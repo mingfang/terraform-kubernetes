@@ -1,28 +1,15 @@
 provider "aws" {
-  access_key = var.access_key
-  secret_key = var.secret_key
-  region     = var.region
+  region                  = var.region
+  shared_credentials_file = "../step-0/aws_credentials"
 }
-
-# Cluster
 
 data "aws_route53_zone" "public" {
   name = var.public_domain
 }
 
-data "aws_acm_certificate" "com_cert" {
-  domain   = "*.${var.public_domain}"
-  statuses = ["ISSUED"]
-}
-
-data "aws_acm_certificate" "admin_cert" {
-  domain   = "*.admin.${var.public_domain}"
-  statuses = ["ISSUED"]
-}
-
-data "aws_ami" "ami" {
+data "aws_ami" "kubernetes" {
   most_recent = true
-  owners      = ["self"]
+  owners      = ["177368686266"]
 
   filter {
     name   = "name"
@@ -30,63 +17,26 @@ data "aws_ami" "ami" {
   }
 }
 
-module "kubernetes" {
-  source          = "../../kubernetes"
-  name            = var.name
-  region          = var.region
-  azs             = var.azs
-  access_key      = var.access_key
-  secret_key      = var.secret_key
-  public_key_path = var.public_key_path
-  route53_zone_id = data.aws_route53_zone.public.id
-  ami_id          = data.aws_ami.ami.id
-  bastion_enable = true
+// SSH keys for all EC2 instances and bastion
+resource "aws_key_pair" "cluster_key_pair" {
+  key_name   = "${var.name}-key-pair"
+  public_key = file("${path.module}/key.pub")
 
-  kmaster_instance_type = "t3a.medium"
-
-  com_size            = 0
-  com_instance_type   = "t3a.micro"
-  com_certificate_arn = data.aws_acm_certificate.com_cert.arn
-
-  admin_size            = 0
-  admin_instance_type   = "t3a.micro"
-  admin_certificate_arn = data.aws_acm_certificate.admin_cert.arn
-
-  green_size          = 1
-  green_instance_type = "t3a.micro"
-
-  net_size          = 0
-  net_instance_type = "t3a.micro"
-
-  db_size          = 0
-  db_instance_type = "t3a.medium"
-}
-
-# Storage
-/*
-resource "aws_ebs_volume" "volume1" {
-  availability_zone = "us-west-2a"
-  size              = 10
-  encrypted         = true
-
-  tags {
-    Name   = "volume1"
-    Backup = "default"
-
-    //    Zone   = "db"
+  lifecycle {
+    create_before_destroy = false
   }
 }
 
-resource "aws_ebs_volume" "volume2" {
-  availability_zone = "us-west-2a"
-  size              = 10
-  encrypted         = true
+// EFS for KMaster state
+module "efs" {
+  source = "../../vpc/efs"
+  name   = "${var.name}-efs"
 
-  tags {
-    Name   = "volume2"
-    Backup = "default"
-
-    //    Zone   = "db"
-  }
+  vpc_id                          = local.vpc_id
+  region                          = var.region
+  subnet_ids                      = local.private_subnet_ids
+  dns_name                        = "cluster-data"
+  route53_zone_id                 = module.network.route53_private.id
+  transition_to_ia                = var.efs_transition_to_ia
+  provisioned_throughput_in_mibps = var.efs_provisioned_throughput_in_mibps
 }
-*/

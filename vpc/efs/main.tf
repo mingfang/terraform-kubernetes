@@ -17,10 +17,6 @@ resource "aws_efs_file_system" "efs" {
   tags = {
     Name = var.name
   }
-
-  lifecycle {
-    prevent_destroy = "false"
-  }
 }
 
 resource "aws_efs_mount_target" "target" {
@@ -39,11 +35,11 @@ resource "aws_route53_record" "efs" {
 }
 
 resource "aws_security_group" "mount_target_client" {
-  name        = "${var.name}-mount-target-client"
-  vpc_id      = var.vpc_id
+  name   = "${var.name}-mount-target-client"
+  vpc_id = var.vpc_id
 
   tags = {
-    Name =  "${var.name}-mount-target-client"
+    Name = "${var.name}-mount-target-client"
   }
 }
 
@@ -52,16 +48,16 @@ resource "aws_security_group_rule" "efs_egress" {
   from_port                = 2049
   to_port                  = 2049
   protocol                 = "tcp"
-  security_group_id = aws_security_group.mount_target_client.id
+  security_group_id        = aws_security_group.mount_target_client.id
   source_security_group_id = aws_security_group.mount_target.id
 }
 
 resource "aws_security_group" "mount_target" {
-  name        = "${var.name}-mount-target"
-  vpc_id      = var.vpc_id
+  name   = "${var.name}-mount-target"
+  vpc_id = var.vpc_id
 
   tags = {
-    Name =  "${var.name}-mount-target"
+    Name = "${var.name}-mount-target"
   }
 }
 
@@ -70,6 +66,6 @@ resource "aws_security_group_rule" "efs_ingress" {
   from_port                = 2049
   to_port                  = 2049
   protocol                 = "tcp"
-  security_group_id = aws_security_group.mount_target.id
+  security_group_id        = aws_security_group.mount_target.id
   source_security_group_id = aws_security_group.mount_target_client.id
 }

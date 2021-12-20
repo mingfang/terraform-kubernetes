@@ -32,57 +32,7 @@ resource "aws_iam_role_policy" "role_policy" {
   name = "${var.name}-policy"
   role = aws_iam_role.iam_role.id
 
-  policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Action": [
-          "ec2:DescribeInstances",
-          "iam:GetInstanceProfile"
-        ],
-        "Resource": [
-          "*"
-        ]
-      },
-      {
-        "Effect": "Allow",
-        "Action": [
-          "s3:PutObject"
-        ],
-        "Resource": [
-          "*"
-        ]
-      },
-      {
-        "Effect": "Allow",
-        "Action": [
-          "ec2:AttachVolume",
-          "ec2:DetachVolume",
-          "ec2:DescribeVolumes"
-        ],
-        "Resource": [
-          "*"
-        ]
-      },
-      {
-        "Effect": "Allow",
-        "Action": [
-          "kms:CreateGrant",
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*",
-          "kms:Describe*"
-        ],
-        "Resource": [
-          "*"
-        ]
-      }
-    ]
-  }
-  EOF
+  policy = file("${path.module}/iam-policy.json")
 }
 
 /* S3 Bucket for kmaster keys */
@@ -119,7 +69,7 @@ locals {
     efs_dns_name      = var.efs_dns_name
     bucket            = aws_s3_bucket.keys.id
     iam_role          = aws_iam_role.iam_role.id
-    kubernetes_master = "https://${var.lb_public_fqdn}:6443"
+    kubernetes_master = var.lb_public_fqdn
     alt_names = join(",", compact([
       var.lb_private_fqdn,
       var.lb_public_fqdn,
@@ -128,20 +78,30 @@ locals {
   })
 }
 
-resource "aws_launch_configuration" "lc" {
-  name_prefix                 = "${var.name}-"
-  instance_type               = var.instance_type
-  image_id                    = var.image_id
-  key_name                    = var.key_name
-  security_groups             = concat([aws_security_group.sg.id], var.security_group_ids)
-  associate_public_ip_address = false
-  user_data                   = local.start_sh
-  iam_instance_profile        = aws_iam_instance_profile.instance_profile.name
+resource "aws_launch_template" "this" {
+  name_prefix   = "${var.name}-${var.instance_type}"
+  instance_type = var.instance_type
+  image_id      = var.image_id
+  key_name      = var.key_name
+  user_data     = base64encode(local.start_sh)
+  iam_instance_profile {
+    name = aws_iam_instance_profile.instance_profile.name
+  }
 
-  root_block_device {
-    volume_size           = "24"
-    volume_type           = "gp2"
-    delete_on_termination = "true"
+  network_interfaces {
+    associate_public_ip_address = false
+    delete_on_termination       = true
+    security_groups             = concat([aws_security_group.sg.id], var.security_group_ids)
+  }
+
+  block_device_mappings {
+    device_name = "/dev/sda1"
+
+    ebs {
+      delete_on_termination = "true"
+      volume_size           = "24"
+      volume_type           = "gp2"
+    }
   }
 
   lifecycle {
@@ -156,13 +116,32 @@ resource "aws_autoscaling_group" "asg" {
   max_size                  = 1
   default_cooldown          = 60
   health_check_grace_period = 60
-  launch_configuration      = aws_launch_configuration.lc.name
   vpc_zone_identifier       = var.subnet_ids
   target_group_arns         = var.target_group_arns
+
+  mixed_instances_policy {
+    instances_distribution {
+      on_demand_base_capacity                  = var.use_spot ? 0 : 1
+      on_demand_percentage_above_base_capacity = 0
+    }
+
+    launch_template {
+      launch_template_specification {
+        launch_template_id = aws_launch_template.this.id
+        version            = "$Latest"
+      }
+    }
+  }
 
   tag {
     key                 = "Name"
     value               = var.name
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "kubernetes.io/cluster/${var.cluster_name}"
+    value               = ""
     propagate_at_launch = true
   }
 

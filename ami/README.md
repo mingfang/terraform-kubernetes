@@ -9,6 +9,6 @@ Provider Requirements:
 * `region` (required): choose your region
 
 ## Child Modules
-* `kubernetes-1-21-0-1` from [../packer](../packer)
+* `kubernetes-1-21-0-2` from [../packer](../packer)
 * `vpc` from [../packer/vpc](../packer/vpc)
 

@@ -24,7 +24,3 @@ resource "aws_vpc" "vpc" {
     create_before_destroy = true
   }
 }
-
-output "this" {
-  value = aws_vpc.vpc
-}

@@ -2,6 +2,9 @@
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
+# hack to fix DNS problems, https://github.com/coredns/coredns/blob/master/plugin/loop/README.md
+ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
 # Docker Conf
 
 mkdir -p /etc/systemd/system/docker.service.d
@@ -18,24 +21,30 @@ until systemctl -q is-active docker; do echo "Waiting for Docker to start..."; s
 export KMASTER="${kmaster}"
 export TAINTS="${taints}"
 
-cd ~root/docker-kubernetes-node
-
 #wait for dependencies
 
 until curl -s -k https://$KMASTER:6443/healthz; do echo "Waiting for kmaster..."; sleep 10; done
 
 #setup labels
+cd ~root/docker-kubernetes-node
 
 export REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -c -r .region)
 AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+INSTANCE_LIFE_CYCLE=$(curl -s http://169.254.169.254/latest/meta-data/instance-life-cycle)
 INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 AMI_ID=$(curl -s http://169.254.169.254/latest/meta-data/ami-id)
 DOCKER=$(docker version --format '{{.Server.Version}}')
 SHA=$(git rev-parse --short HEAD)
-export LABELS="role=${role},sha=$SHA,ami=$AMI_ID,docker=$DOCKER,instance-id=$INSTANCE_ID"
-export LABELS="$LABELS,topology.kubernetes.io/region=$REGION,topology.kubernetes.io/zone=$AZ,node.kubernetes.io/instance-type=$INSTANCE_TYPE"
+export LABELS="sha=$SHA,ami=$AMI_ID,docker=$DOCKER,instance-id=$INSTANCE_ID"
+export LABELS="$LABELS,topology.kubernetes.io/region=$REGION"
+export LABELS="$LABELS,topology.kubernetes.io/zone=$AZ"
+export LABELS="$LABELS,node.kubernetes.io/instance-type=$INSTANCE_TYPE"
+export LABELS="$LABELS,node.kubernetes.io/lifecycle=$INSTANCE_LIFE_CYCLE"
+export LABELS="$LABELS,role=${role}"
 echo "LABELS=$LABELS"
+
+export PROVIDERID="aws:///$AZ/$INSTANCE_ID"
 
 #setup vault
 
