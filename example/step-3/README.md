@@ -8,7 +8,6 @@ Provider Requirements:
 ## Input Variables
 * `azs` (required)
 * `cluster_name` (required): the name of this cluster
-* `name` (required): the name of this cluster
 * `region` (required): choose your region
 
 ## Data Resources

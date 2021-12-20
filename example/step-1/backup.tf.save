@@ -1,0 +1,7 @@
+# Backup
+
+module "backup" {
+  source            = "../../../terraform-kubernetes/vpc/ebs_backup"
+  name              = "default"
+  default_retention = "7"
+}

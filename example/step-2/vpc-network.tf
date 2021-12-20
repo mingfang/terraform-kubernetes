@@ -1,13 +1,13 @@
 module "vpc" {
   source = "../../vpc"
-  name   = var.name
+  name   = var.cluster_name
   region = var.region
   cidr   = var.cidr
 }
 
 module "network" {
   source                                  = "../../vpc/network"
-  name                                    = var.name
+  name                                    = var.cluster_name
   vpc_id                                  = module.vpc.this.id
   vpc_cidr                                = module.vpc.this.cidr_block
   azs                                     = var.azs
@@ -17,7 +17,7 @@ module "network" {
 
 module "private_subnets" {
   source          = "../../vpc/network/private_subnet"
-  name            = var.name
+  name            = var.cluster_name
   cidrs           = var.private_subnets
   vpc_id          = local.vpc_id
   azs             = var.azs
@@ -48,7 +48,7 @@ resource "aws_network_acl" "acl" {
   }
 
   tags = {
-    Name = "${var.name}-all"
+    Name = "${var.cluster_name}-all"
   }
 }
 

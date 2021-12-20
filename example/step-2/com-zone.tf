@@ -9,7 +9,7 @@ data "aws_acm_certificate" "com_cert" {
 
 module "com_lb" {
   source     = "../../vpc/lb"
-  name       = "${var.name}-com"
+  name       = "${var.cluster_name}-com"
   vpc_id     = local.vpc_id
   subnet_ids = local.public_subnet_ids
   internal   = false
@@ -39,8 +39,7 @@ module "com_lb" {
 
 module "com_zone" {
   source       = "../../kubernetes/knode"
-  name         = "${var.name}-knodes-com"
-  cluster_name = var.name
+  cluster_name = var.cluster_name
   zone         = "com"
 
   size                    = var.com_size

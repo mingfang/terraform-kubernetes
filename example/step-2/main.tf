@@ -19,7 +19,7 @@ data "aws_ami" "kubernetes" {
 
 // SSH keys for all EC2 instances and bastion
 resource "aws_key_pair" "cluster_key_pair" {
-  key_name   = "${var.name}-key-pair"
+  key_name   = "${var.cluster_name}-key-pair"
   public_key = file("${path.module}/key.pub")
 
   lifecycle {
@@ -30,7 +30,7 @@ resource "aws_key_pair" "cluster_key_pair" {
 // EFS for KMaster state
 module "efs" {
   source = "../../vpc/efs"
-  name   = "${var.name}-efs"
+  name   = "${var.cluster_name}-efs"
 
   vpc_id                          = local.vpc_id
   region                          = var.region

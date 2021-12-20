@@ -14,7 +14,6 @@ Provider Requirements:
 * `key_name` (required)
 * `lb_private_fqdn` (required): private Route53 name
 * `lb_public_fqdn` (required): public Route53 name
-* `name` (required)
 * `security_group_ids` (default `[]`): add EFS security group
 * `subnet_ids` (required)
 * `target_group_arns` (required): LB target_group_arns
@@ -22,7 +21,9 @@ Provider Requirements:
 * `vpc_id` (required)
 
 ## Output Values
+* `cluster_name`
 * `kubeconfig_bucket`
+* `name`
 * `security_group_id`
 * `subnet_ids`
 

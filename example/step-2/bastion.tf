@@ -3,7 +3,7 @@ variable "bastion_instance_type" {}
 
 module "bastion" {
   source = "../../vpc/bastion"
-  name   = "${var.name}-bastion"
+  name   = "${var.cluster_name}-bastion"
 
   enable        = var.bastion_enable
   subnet_id     = local.public_subnet_ids[0]

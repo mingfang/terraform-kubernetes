@@ -14,7 +14,6 @@ Provider Requirements:
 * `kmaster` (required)
 * `max_size` (default `null`)
 * `min_size` (default `null`)
-* `name` (required)
 * `nat_ids` (required)
 * `on_demand_base_capacity` (default `null`): Setting on_demand_base_capacity < size would result in (size - on_demand_base_capacity) spot instances; null == no spot
 * `security_group_ids` (default `[]`): add EFS security group
@@ -29,8 +28,10 @@ Provider Requirements:
 * `zone` (required)
 
 ## Output Values
+* `cluster_name`
 * `instance_type`
 * `launch_template`
+* `name`
 * `size`
 * `zone`
 

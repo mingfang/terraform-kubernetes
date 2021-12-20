@@ -1,3 +1,11 @@
+output "name" {
+  value = local.name
+}
+
+output "cluster_name" {
+  value = var.cluster_name
+}
+
 output "zone" {
   value = var.zone
 }

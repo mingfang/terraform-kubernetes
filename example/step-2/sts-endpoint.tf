@@ -11,6 +11,6 @@ resource "aws_vpc_endpoint" "sts" {
   private_dns_enabled = true
 
   tags = {
-    Name = "${var.name}-${data.aws_vpc_endpoint_service.sts.service_name}"
+    Name = "${var.cluster_name}-${data.aws_vpc_endpoint_service.sts.service_name}"
   }
 }

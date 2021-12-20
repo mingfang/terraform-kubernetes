@@ -5,7 +5,7 @@ provider "aws" {
 
 module "aws" {
   source       = "./aws"
-  cluster_name = var.name
+  cluster_name = var.cluster_name
 }
 
 module "ingress" {
@@ -13,7 +13,7 @@ module "ingress" {
 }
 
 data "aws_efs_file_system" "efs" {
-  creation_token = "${var.name}-efs"
+  creation_token = "${var.cluster_name}-efs"
 }
 
 module "efs" {
@@ -21,7 +21,7 @@ module "efs" {
 
   aws_region     = var.region
   file_system_id = data.aws_efs_file_system.efs.file_system_id
-  dns_name       = "cluster-data.${var.name}.private"
+  dns_name       = "cluster-data.${var.cluster_name}.private"
 }
 
 /*

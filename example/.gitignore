@@ -1,0 +1,9 @@
+.idea
+.terraform
+*.pem
+*.pub
+*.tfstate
+*.tfstate.backup
+aws_credentials
+*kubeconfig*
+**/backend.tf

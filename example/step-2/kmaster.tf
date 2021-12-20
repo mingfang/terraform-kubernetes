@@ -2,7 +2,7 @@ variable "kmaster_instance_type" {}
 
 module "kmaster_lb_public" {
   source = "../../vpc/lb"
-  name   = "${var.name}-kmaster-public"
+  name   = "${var.cluster_name}-kmaster-public"
 
   load_balancer_type = "network"
   internal           = false
@@ -22,7 +22,7 @@ module "kmaster_lb_public" {
 
 module "kmaster_lb_private" {
   source = "../../vpc/lb"
-  name   = "${var.name}-kmaster-private"
+  name   = "${var.cluster_name}-kmaster-private"
 
   load_balancer_type = "network"
   internal           = true
@@ -45,8 +45,8 @@ module "kmaster_lb_private" {
 }
 
 module "kmaster" {
-  source = "../../kubernetes/kmaster"
-  name   = "${var.name}-kmaster"
+  source       = "../../kubernetes/kmaster"
+  cluster_name = "${var.cluster_name}-kmaster"
 
   use_spot      = true
   instance_type = var.kmaster_instance_type

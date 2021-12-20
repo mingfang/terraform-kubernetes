@@ -1,9 +1,13 @@
+locals {
+  name = "${var.cluster_name}-kmaster"
+}
+
 data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
 
 resource "aws_iam_role" "iam_role" {
-  name = "${var.name}-role"
+  name = "${local.name}-role"
 
   assume_role_policy = <<-EOF
   {
@@ -24,12 +28,12 @@ resource "aws_iam_role" "iam_role" {
 }
 
 resource "aws_iam_instance_profile" "instance_profile" {
-  name = "${var.name}-profile"
+  name = "${local.name}-profile"
   role = aws_iam_role.iam_role.name
 }
 
 resource "aws_iam_role_policy" "role_policy" {
-  name = "${var.name}-policy"
+  name = "${local.name}-policy"
   role = aws_iam_role.iam_role.id
 
   policy = file("${path.module}/iam-policy.json")
@@ -37,7 +41,7 @@ resource "aws_iam_role_policy" "role_policy" {
 
 /* S3 Bucket for kmaster keys */
 resource "aws_s3_bucket" "keys" {
-  bucket_prefix = "${var.name}-keys-"
+  bucket_prefix = "${local.name}-keys-"
   acl           = "private"
   force_destroy = true
 
@@ -79,7 +83,7 @@ locals {
 }
 
 resource "aws_launch_template" "this" {
-  name_prefix   = "${var.name}-${var.instance_type}"
+  name_prefix   = "${local.name}-${var.instance_type}"
   instance_type = var.instance_type
   image_id      = var.image_id
   key_name      = var.key_name
@@ -110,7 +114,7 @@ resource "aws_launch_template" "this" {
 }
 
 resource "aws_autoscaling_group" "asg" {
-  name_prefix               = "${var.name}-"
+  name_prefix               = "${local.name}-"
   desired_capacity          = 1
   min_size                  = 1
   max_size                  = 1
@@ -135,7 +139,7 @@ resource "aws_autoscaling_group" "asg" {
 
   tag {
     key                 = "Name"
-    value               = var.name
+    value               = local.name
     propagate_at_launch = true
   }
 
@@ -149,7 +153,7 @@ resource "aws_autoscaling_group" "asg" {
 }
 
 resource "aws_security_group" "sg" {
-  name   = var.name
+  name   = local.name
   vpc_id = var.vpc_id
 
   //need for ARP to work; figure out the port later
@@ -209,7 +213,7 @@ resource "aws_security_group" "sg" {
   }
 
   tags = {
-    Name = var.name
+    Name = local.name
   }
 
   lifecycle {

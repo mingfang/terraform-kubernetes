@@ -4,8 +4,7 @@ variable "green_volume_size" {}
 
 module "green_zone" {
   source       = "../../kubernetes/knode"
-  name         = "${var.name}-knodes-green"
-  cluster_name = var.name
+  cluster_name = var.cluster_name
   zone         = "green"
 
   size                    = var.green_size

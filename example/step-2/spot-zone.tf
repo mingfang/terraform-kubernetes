@@ -4,8 +4,7 @@ variable "spot_volume_size" {}
 
 module "spot_zone" {
   source       = "../../kubernetes/knode"
-  name         = "${var.name}-knodes-spot"
-  cluster_name = var.name
+  cluster_name = var.cluster_name
   zone         = "spot"
 
   size                    = var.spot_size

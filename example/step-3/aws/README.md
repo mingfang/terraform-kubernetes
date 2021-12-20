@@ -12,6 +12,7 @@ Provider Requirements:
 * `k8s_core_v1_namespace.this` from `k8s`
 
 ## Child Modules
+* `aws-cloud-provider` from [../../../../terraform-k8s-modules/modules/aws/aws-cloud-provider](../../../../terraform-k8s-modules/modules/aws/aws-cloud-provider)
 * `aws-cluster-autoscaler` from [../../../../terraform-k8s-modules/modules/aws/aws-cluster-autoscaler](../../../../terraform-k8s-modules/modules/aws/aws-cluster-autoscaler)
 * `aws_node_termination_handler` from [../../../../terraform-k8s-modules/modules/aws/aws-node-termination-handler](../../../../terraform-k8s-modules/modules/aws/aws-node-termination-handler)
 
