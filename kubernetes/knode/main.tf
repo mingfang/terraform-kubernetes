@@ -83,8 +83,8 @@ resource "aws_launch_template" "this" {
 resource "aws_autoscaling_group" "asg" {
   name_prefix               = "${var.name}-"
   desired_capacity          = var.size
-  min_size                  = var.min_size != null ? var.min_size : var.size
-  max_size                  = var.max_size != null ? var.max_size : var.size
+  min_size                  = coalesce(var.min_size, var.size, 0)
+  max_size                  = coalesce(var.max_size, var.size, 0)
   default_cooldown          = 60
   health_check_grace_period = 60
   vpc_zone_identifier       = var.subnet_ids
