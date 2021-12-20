@@ -6,4 +6,3 @@
 *.tfstate.backup
 aws_credentials
 *kubeconfig*
-**/backend.tf

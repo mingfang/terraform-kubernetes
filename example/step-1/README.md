@@ -7,7 +7,6 @@ Provider Requirements:
 ## Input Variables
 * `azs` (required)
 * `cluster_name` (required): the name of this cluster
-* `name` (required): the name of this cluster
 * `public_domain` (required): you public domain, e.g. example.com
 * `region` (required): choose your region
 
