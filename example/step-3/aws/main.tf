@@ -5,7 +5,7 @@ resource "k8s_core_v1_namespace" "this" {
 }
 
 module "aws_node_termination_handler" {
-  source    = "../../../../terraform-k8s-modules/modules/aws/aws-node-termination-handler"
+  source    = "github.com/mingfang/terraform-k8s-modules/modules/aws/aws-node-termination-handler"
   namespace = k8s_core_v1_namespace.this.metadata[0].name
 
   ENABLE_SCHEDULED_EVENT_DRAINING   = "true"
@@ -17,7 +17,7 @@ module "aws_node_termination_handler" {
 }
 
 module "aws-cluster-autoscaler" {
-  source    = "../../../../terraform-k8s-modules/modules/aws/aws-cluster-autoscaler"
+  source    = "github.com/mingfang/terraform-k8s-modules/modules/aws/aws-cluster-autoscaler"
   namespace = k8s_core_v1_namespace.this.metadata[0].name
   node_selector = {
     "role" = "master"
@@ -26,7 +26,7 @@ module "aws-cluster-autoscaler" {
 }
 
 module "aws-cloud-provider" {
-  source    = "../../../../terraform-k8s-modules/modules/aws/aws-cloud-provider"
+  source    = "github.com/mingfang/terraform-k8s-modules/modules/aws/aws-cloud-provider"
   namespace = k8s_core_v1_namespace.this.metadata[0].name
   node_selector = {
     "role" = "master"

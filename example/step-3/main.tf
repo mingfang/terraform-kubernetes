@@ -23,9 +23,3 @@ module "efs" {
   file_system_id = data.aws_efs_file_system.efs.file_system_id
   dns_name       = "cluster-data.${var.cluster_name}.private"
 }
-
-/*
-module "vpa-recommender" {
-  source = "../../../terraform-k8s-modules/modules/kubernetes/vpa-recommender"
-}
-*/

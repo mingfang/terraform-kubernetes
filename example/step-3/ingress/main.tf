@@ -8,7 +8,7 @@ resource "k8s_core_v1_namespace" "this" {
 }
 
 module "ingress-controller" {
-  source        = "../../../../terraform-k8s-modules/modules/kubernetes/ingress-nginx"
+  source        = "github.com/mingfang/terraform-k8s-modules/modules/kubernetes/ingress-nginx"
   name          = "ingress-controller"
   namespace     = k8s_core_v1_namespace.this.metadata[0].name
   replicas      = 1

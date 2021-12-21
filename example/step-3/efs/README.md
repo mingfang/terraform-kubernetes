@@ -17,5 +17,5 @@ Provider Requirements:
 * `k8s_storage_k8s_io_v1_storage_class.efs` from `k8s`
 
 ## Child Modules
-* `efs-provisioner` from [../../../../terraform-k8s-modules/modules/kubernetes/efs-provisioner](../../../../terraform-k8s-modules/modules/kubernetes/efs-provisioner)
+* `efs-provisioner` from `github.com/mingfang/terraform-k8s-modules/modules/kubernetes/efs-provisioner`
 

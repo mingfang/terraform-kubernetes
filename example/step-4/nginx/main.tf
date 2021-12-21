@@ -8,7 +8,7 @@ resource "k8s_core_v1_namespace" "this" {
 }
 
 module "nginx" {
-  source    = "../../../../terraform-k8s-modules/modules/nginx"
+  source    = "github.com/mingfang/terraform-k8s-modules/modules/nginx"
   name      = var.name
   namespace = k8s_core_v1_namespace.this.metadata[0].name
 }

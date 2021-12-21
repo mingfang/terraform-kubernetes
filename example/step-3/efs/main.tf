@@ -8,7 +8,7 @@ resource "k8s_core_v1_namespace" "this" {
 }
 
 module "efs-provisioner" {
-  source    = "../../../../terraform-k8s-modules/modules/kubernetes/efs-provisioner"
+  source    = "github.com/mingfang/terraform-k8s-modules/modules/kubernetes/efs-provisioner"
   namespace = k8s_core_v1_namespace.this.metadata[0].name
 
   AWS_REGION     = var.aws_region
