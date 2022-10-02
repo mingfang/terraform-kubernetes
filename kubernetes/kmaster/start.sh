@@ -7,6 +7,11 @@ ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
 # Docker Conf
 
+mkdir -p /var/lib/kubelet
+cat << EOF > /var/lib/kubelet/config.json
+${docker_config_json}
+EOF
+
 mkdir -p /etc/systemd/system/docker.service.d
 cat << EOF > /etc/systemd/system/docker.service.d/docker.conf
 ${docker_conf}
@@ -24,6 +29,7 @@ export ALT_NAMES="${alt_names}"
 export BUCKET="${bucket}"
 export AWS_PROFILE="${iam_role}"
 export KUBERNETES_MASTER="${kubernetes_master}"
+export CLUSTER_CIDR="${cluster_cidr}"
 
 #mount EFS
 

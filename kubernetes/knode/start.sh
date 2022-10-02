@@ -7,6 +7,11 @@ ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
 # Docker Conf
 
+mkdir -p /var/lib/kubelet
+cat << EOF > /var/lib/kubelet/config.json
+${docker_config_json}
+EOF
+
 mkdir -p /etc/systemd/system/docker.service.d
 cat << EOF > /etc/systemd/system/docker.service.d/docker.conf
 ${docker_conf}

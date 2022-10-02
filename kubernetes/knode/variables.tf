@@ -69,3 +69,8 @@ variable "environments" {
 variable "insecure_registry" {
   default = null
 }
+
+variable "docker_config_json" {
+  default     = ""
+  description = "registry auth"
+}

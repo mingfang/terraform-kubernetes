@@ -43,3 +43,12 @@ variable "insecure_registry" {
 variable "use_spot" {
   default = false
 }
+
+variable "docker_config_json" {
+  default     = ""
+  description = "registry auth"
+}
+
+variable "cluster_cidr" {
+  default = "10.0.0.0/16"
+}

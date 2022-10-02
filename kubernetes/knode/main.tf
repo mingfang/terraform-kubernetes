@@ -46,10 +46,11 @@ locals {
   })
 
   start_sh = templatefile("${path.module}/start.sh", {
-    role        = var.zone
-    kmaster     = var.kmaster
-    taints      = var.taints
-    docker_conf = local.docker_conf
+    role               = var.zone
+    kmaster            = var.kmaster
+    taints             = var.taints
+    docker_conf        = local.docker_conf
+    docker_config_json = var.docker_config_json
   })
 }
 

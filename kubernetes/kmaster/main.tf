@@ -78,7 +78,9 @@ locals {
       var.lb_private_fqdn,
       var.lb_public_fqdn,
     ]))
-    docker_conf = local.docker_conf
+    cluster_cidr       = var.cluster_cidr
+    docker_conf        = local.docker_conf
+    docker_config_json = var.docker_config_json
   })
 }
 
