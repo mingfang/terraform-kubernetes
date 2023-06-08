@@ -1,5 +1,10 @@
-variable "bastion_enable" {}
-variable "bastion_instance_type" {}
+variable "bastion_enable" {
+  default = true
+}
+
+variable "bastion_instance_type" {
+  default = "t3a.nano"
+}
 
 module "bastion" {
   source = "../../vpc/bastion"
@@ -12,6 +17,10 @@ module "bastion" {
   vpc_id                      = local.vpc_id
   image_id                    = data.aws_ami.kubernetes.image_id
   key_name                    = aws_key_pair.cluster_key_pair.key_name
-  route53_zone_id             = data.aws_route53_zone.public.id
+  route53_zone_id             = local.public_route53_zone_id
   associate_public_ip_address = true
+}
+
+output "bastion" {
+  value = module.bastion
 }

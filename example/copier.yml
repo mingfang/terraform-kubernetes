@@ -1,0 +1,1 @@
+_exclude: ["copier.yaml", "copier.yml", "~*", "*.py[co]", "__pycache__", ".git", ".DS_Store", ".svn", ".terraform", "*.tfvars"]

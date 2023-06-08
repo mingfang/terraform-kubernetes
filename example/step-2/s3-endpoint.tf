@@ -14,6 +14,6 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 resource "aws_vpc_endpoint_route_table_association" "s3" {
-  route_table_id  = module.vpc.this.main_route_table_id
+  route_table_id  = local.vpc_main_route_table_id
   vpc_endpoint_id = aws_vpc_endpoint.s3.id
 }

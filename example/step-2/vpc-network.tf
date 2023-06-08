@@ -1,3 +1,8 @@
+variable "cidr" {}
+variable "public_subnets" {}
+variable "private_subnets" {}
+variable "transit_gateway_destination_cidr_blocks" {}
+
 module "vpc" {
   source = "../../vpc"
   name   = var.cluster_name
@@ -57,5 +62,8 @@ locals {
   vpc_main_route_table_id = module.vpc.this.main_route_table_id
   public_subnet_ids       = module.network.public_subnet_ids
   private_subnet_ids      = module.private_subnets.ids
+  private_route53_zone_id = module.network.route53_private.id
+  public_route53_zone_id  = data.aws_route53_zone.public.id
+  security_group_ids      = [module.network.security_group_id]
 }
 

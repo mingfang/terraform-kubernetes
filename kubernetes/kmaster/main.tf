@@ -73,7 +73,7 @@ locals {
     efs_dns_name      = var.efs_dns_name
     bucket            = aws_s3_bucket.keys.id
     iam_role          = aws_iam_role.iam_role.id
-    kubernetes_master = var.lb_public_fqdn
+    kubernetes_master = ""
     alt_names = join(",", compact([
       var.lb_private_fqdn,
       var.lb_public_fqdn,

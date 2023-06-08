@@ -63,6 +63,7 @@ resource "aws_launch_template" "this" {
   iam_instance_profile {
     name = aws_iam_instance_profile.instance_profile.name
   }
+  ebs_optimized = "true"
 
   network_interfaces {
     associate_public_ip_address = false

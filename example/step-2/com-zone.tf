@@ -1,7 +1,16 @@
-variable "com_size" {}
-variable "com_instance_type" {}
-variable "com_volume_size" {}
+variable "com_size" {
+  default = 1
+}
 
+variable "com_instance_type" {
+  default = "t3a.large"
+}
+
+variable "com_volume_size" {
+  default = "64"
+}
+
+# Pre-allocated by infra
 data "aws_acm_certificate" "com_cert" {
   domain   = var.public_domain
   statuses = ["ISSUED"]
@@ -58,4 +67,7 @@ module "com_zone" {
   nat_ids           = []
   kmaster           = module.kmaster_lb_private.fqdn
   target_group_arns = module.com_lb.target_group_arns
+
+  insecure_registry = null
+  environments      = []
 }

@@ -8,4 +8,4 @@ terraform apply
 # save state to backend
 
 terraform init -force-copy
-rm *.tfstate*
+rm *.tfstate* || true

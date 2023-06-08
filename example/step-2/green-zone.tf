@@ -1,6 +1,14 @@
-variable "green_size" {}
-variable "green_instance_type" {}
-variable "green_volume_size" {}
+variable "green_size" {
+  default = 1
+}
+
+variable "green_instance_type" {
+  default = "m5a.xlarge"
+}
+
+variable "green_volume_size" {
+  default = "64"
+}
 
 module "green_zone" {
   source       = "../../kubernetes/knode"
@@ -17,10 +25,13 @@ module "green_zone" {
   vpc_id     = local.vpc_id
   subnet_ids = local.private_subnet_ids
   key_name   = aws_key_pair.cluster_key_pair.key_name
-  security_group_ids = [
-    module.network.security_group_id,
-    module.efs.mount_target_client_security_group_id,
-  ]
+  security_group_ids = concat(
+    local.security_group_ids,
+    [module.efs.mount_target_client_security_group_id],
+  )
   nat_ids = []
   kmaster = module.kmaster_lb_private.fqdn
+
+  insecure_registry = null
+  environments      = []
 }

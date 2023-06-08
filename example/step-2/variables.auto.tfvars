@@ -1,4 +1,4 @@
-ami_name        = "kubernetes-1.21.0-1"
+ami_name        = "kubernetes-1.21.0-2"
 cidr            = "10.248.0.0/16"
 public_subnets  = ["10.248.10.0/24", "10.248.11.0/24"]
 private_subnets = ["10.248.20.0/24", "10.248.21.0/24"]

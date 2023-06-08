@@ -27,16 +27,3 @@ resource "aws_key_pair" "cluster_key_pair" {
   }
 }
 
-// EFS for KMaster state
-module "efs" {
-  source = "../../vpc/efs"
-  name   = "${var.cluster_name}-efs"
-
-  vpc_id                          = local.vpc_id
-  region                          = var.region
-  subnet_ids                      = local.private_subnet_ids
-  dns_name                        = "cluster-data"
-  route53_zone_id                 = module.network.route53_private.id
-  transition_to_ia                = var.efs_transition_to_ia
-  provisioned_throughput_in_mibps = var.efs_provisioned_throughput_in_mibps
-}
