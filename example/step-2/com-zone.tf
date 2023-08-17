@@ -26,12 +26,12 @@ module "com_lb" {
     {
       port         = 80
       protocol     = "HTTP"
-      health_check = "/lbstatus"
+      health_check = "/healthz"
     },
     {
       port            = 443
       protocol        = "HTTPS"
-      health_check    = "/lbstatus"
+      health_check    = "/healthz"
       certificate_arn = data.aws_acm_certificate.com_cert.arn
     },
   ]
