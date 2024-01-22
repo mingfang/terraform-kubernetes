@@ -23,3 +23,13 @@ variable transition_to_ia {
   type    = string
   default = "AFTER_7_DAYS"
 }
+
+variable transition_to_primary_storage_class {
+  type    = string
+  default = "AFTER_1_ACCESS"
+}
+
+variable tags {
+  type = map
+  default = {}
+}

@@ -11,12 +11,16 @@ resource "aws_efs_file_system" "efs" {
   encrypted                       = true
 
   lifecycle_policy {
-    transition_to_ia = var.transition_to_ia
+    transition_to_ia                    = var.transition_to_ia
+    transition_to_primary_storage_class = var.transition_to_primary_storage_class
   }
 
-  tags = {
-    Name = var.name
-  }
+  tags = merge(
+    {
+      Name = var.name
+    },
+    var.tags
+  )
 }
 
 resource "aws_efs_mount_target" "target" {
