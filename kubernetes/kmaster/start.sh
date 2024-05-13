@@ -48,14 +48,20 @@ ln -s /mnt/data/kmaster/{etcd-data,vault-data,pki-data} ~root/docker-kubernetes-
 #setup labels
 cd ~root/docker-kubernetes-master
 
-export REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -c -r .region)
-AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
-INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
-INSTANCE_LIFE_CYCLE=$(curl -s http://169.254.169.254/latest/meta-data/instance-life-cycle)
-INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-AMI_ID=$(curl -s http://169.254.169.254/latest/meta-data/ami-id)
+# IMDSv2
+TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60"`
+
+export REGION=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/dynamic/instance-identity/document | jq -c -r .region)
+AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
+INSTANCE_TYPE=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-type)
+INSTANCE_LIFE_CYCLE=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-life-cycle)
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+AMI_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/ami-id)
+KEYS=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/$AWS_PROFILE)
+
 DOCKER=$(docker version --format '{{.Server.Version}}')
 SHA=$(git rev-parse --short HEAD)
+
 export LABELS="sha=$SHA,ami=$AMI_ID,docker=$DOCKER,instance-id=$INSTANCE_ID"
 export LABELS="$LABELS,topology.kubernetes.io/region=$REGION"
 export LABELS="$LABELS,topology.kubernetes.io/zone=$AZ"
@@ -75,7 +81,6 @@ cd ~root/docker-kubernetes-master
 cd ~root/docker-kubernetes-master/vault-data
 until curl -s -k https://localhost:6443/healthz; do echo "Waiting for kubernetes..."; sleep 10; done
 
-KEYS=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/$AWS_PROFILE)
 ACCESS_KEY=$(echo $KEYS|jq -r .AccessKeyId)
 SECRET_KEY=$(echo $KEYS|jq -r .SecretAccessKey)
 TOKEN=$(echo $KEYS|jq -r .Token)
