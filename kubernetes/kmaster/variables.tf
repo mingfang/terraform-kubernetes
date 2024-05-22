@@ -52,3 +52,8 @@ variable "docker_config_json" {
 variable "cluster_cidr" {
   default = "10.0.0.0/16"
 }
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}

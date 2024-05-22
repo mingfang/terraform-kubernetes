@@ -74,3 +74,8 @@ variable "docker_config_json" {
   default     = ""
   description = "registry auth"
 }
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}

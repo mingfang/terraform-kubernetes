@@ -111,7 +111,7 @@ resource "aws_launch_template" "this" {
   }
 
   metadata_options {
-    http_tokens = "required"
+    http_tokens                 = "required"
     http_put_response_hop_limit = 2
   }
 
@@ -154,6 +154,16 @@ resource "aws_autoscaling_group" "asg" {
     key                 = "kubernetes.io/cluster/${var.cluster_name}"
     value               = ""
     propagate_at_launch = true
+  }
+
+  dynamic "tag" {
+    for_each = var.tags
+
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
   }
 
   depends_on = [aws_s3_bucket.keys]
