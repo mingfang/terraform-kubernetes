@@ -56,6 +56,11 @@ resource "aws_instance" "bastion" {
     Name = var.name
   }
 
+  metadata_options {
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
+  }
+
   lifecycle {
     create_before_destroy = true
   }
